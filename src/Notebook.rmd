@@ -1,0 +1,18 @@
+---
+title: TODO
+author:
+    - Sergio Quijano Rey
+    - sergioquijano@correo.ugr.es
+date:
+output:
+    html_document:
+        toc: true
+        toc_depth: 3
+        toc_float: true
+        collapsed: true
+        number_sections: true
+---
+
+# Introducción
+
+Notar que todo el código, así como el historial del desarrollo de este, está disponible en [este repositorio de Github](https://github.com/SergioQuijanoRey/EstadisticaMultivariantePracticaFinal)
