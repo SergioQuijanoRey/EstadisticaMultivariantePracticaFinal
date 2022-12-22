@@ -29,3 +29,5 @@ view_pdf: (compile "pdf_document")
 clean:
     - {{RM}} ./src/*.pdf
     - {{RM}} ./src/*.html
+    - {{RM}} ./src/*.log
+    - {{RM}} ./src/*.tex
