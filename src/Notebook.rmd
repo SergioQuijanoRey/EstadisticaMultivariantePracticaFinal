@@ -1,5 +1,5 @@
 ---
-title: TODO
+title: Estudio sobre la empleabilidad de los estudiantes
 author:
     - Sergio Quijano Rey
     - sergioquijano@correo.ugr.es
@@ -16,3 +16,88 @@ output:
 # Introducción
 
 Notar que todo el código, así como el historial del desarrollo de este, está disponible en [este repositorio de Github](https://github.com/SergioQuijanoRey/EstadisticaMultivariantePracticaFinal)
+
+# Paquetes utilizados
+
+A continuación, importamos todos los paquetes que vamos a utilizar:
+
+```{r}
+# Para leer archivos .sav
+library(foreign)
+
+# Para leer archivos excel
+library(readxl)
+```
+
+Estos paquetes se pueden instalar con la orden `install.packages("<nombre_paquete>")`. Sin embargo, hemos definido todos los paquetes necesarios, de forma declarativa, en el archivo `shell.nix` que se puede encontrar en [este archivo](https://github.com/SergioQuijanoRey/EstadisticaMultivariantePracticaFinal/blob/main/shell.nix).
+
+# Descripción de la base de datos
+
+La base de datos se puede encontrar en el repositorio [Kaggle](https://www.kaggle.com/datasets/anashamoutni/students-employability-dataset). Este *dataset* contiene datos recogidos por agencias universitarias en las Filipinas. Contiene datos de entrevistas de trabajo de pruebas (para entrenar a los estudiantes en su futura búsqueda de trabajo). El *dataset* no ha sido limpiado ni procesado ^[Según lo que se dice el Kaggle, sin embargo más adelante comentamos que esto no es del todo cierto], así que este trabajo lo tendremos que realizar nosotros.
+
+Este *dataset* se compone de 10 columnas y 2983 filas. Las columnas se corresponden con:
+
+1. Identificador numérico del estudiante. Lo llaman nombre del estudiante, pero en verdad se corresponde con una etiqueta numérica del tipo "Student <id>"
+2. Aparencia general. Un valor que va del 1 al 5
+
+Si nos fijamos en el número de filas y los identificadores de los estudiantes, podemos ver que tenemos hasta el identificador 3000, mientras que tenemos 22 filas menos. Esto nos hace pensar que sí que se han procesado los datos, eliminando 22 filas o bien con datos faltantes o bien con *outliers*.
+
+Como veremos más adelante, el *dataset* no presenta datos faltantes, así que lo más seguro es que las filas eliminadas sean por los datos faltantes.
+
+Con todo esto, ya estamos en condiciones de importar los datos:
+
+```{r}
+df <- read_excel("../data/Student-Employability-Datasets.xlsx")
+head(df)
+```
+
+Y ahora, un resumen del *dataset*:
+
+```{r}
+summary(df)
+```
+
+# Análisis Exploratorio Univariante
+
+## Recodificaciones o agrupaciones de datos
+
+## Valores perdidos
+
+1. % de valores perdidos de cada variable
+2. Patrón aleatorio de aquellas con más de un 5% de valores perdidos
+
+## Análisis Descriptivo Numérico Clásico
+
+## Outliers
+
+## Estudio del supuesto de normalidad
+
+----------------------------------------------------------------------------------------------------
+
+# Análisis exploratorio multivariante
+
+## Comprobar supuestos de correlación entre variables
+
+Barlett
+
+## Outliers multivariantes
+
+## Tratar valores perdidos si no los hemos tratado ya
+
+## Reducción de la dimensionalidad con componentes principales o variables latentes
+
+## Estudiar el supuesto de normalidad multivariante
+
+----------------------------------------------------------------------------------------------------
+
+# Clasificación
+
+## Clasificador con discriminante lineal
+
+## Clasificador con discriminante cuadrático
+
+----------------------------------------------------------------------------------------------------
+
+# Validación
+
+## Validación con matriz de confusión
