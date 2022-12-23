@@ -99,6 +99,8 @@ Para realizar una posterior validación cruzada, tenemos que separar los datos e
 - Este procesamiento aprendido en el conjunto de entrenamiento debe aplicarse ciegamente sobre el conjunto de test
 - Por ejemplo, si se decide estandarizar una variable, se debe aplicar usando la media y desviación del conjunto de entrenamiento. Ese valor, sobre el conjunto de entrenamiento, se aplica después en la normalización del conjunto de test, y no los estadísticos en test
 
+Algunas operaciones, por su naturaleza, no tienen por qué ser tan estrictas. Por ejemplo, una recodificación de una variable de tipo texto en tipo numérico de forma sencilla (como hacemos en [Recodificaciones o agrupaciones de datos]).
+
 Dicho esto, separamos en los dos conjuntos de datos. Hacemos un muestreo aleatorio porque en muchos conjuntos de datos, el orden de los datos involucra cierto patrón:
 
 ```{r}
@@ -217,13 +219,43 @@ missing_values_perc <- 22 / 3000 * 100
 missing_values_perc
 ```
 
-Esto es algo menos del 0.74%, por lo tanto, no es necesario analizar el patrón aleatorio de los valores perdidos. Además, el procesamiento de estos valores perdidos ya ha sido impuesto por el autor de la base de datos, que ha decidido eliminarlos. Esto no nos supone un gran problema puesto que tenemos un volumen de datos considerable.
+Esto es algo menos del 0.74%, por lo tanto, no es necesario analizar el patrón aleatorio de los valores perdidos. Además, el procesamiento de estos valores perdidos ya ha sido impuesto por el autor de la base de datos, que ha decidido eliminarlos. Esto no nos supone un gran problema puesto que tenemos un volumen de datos considerable
 
 ## Análisis Descriptivo Numérico Clásico
 
 ## Outliers
 
 ## Balanceo de las clases
+
+Esto se ha podido ver en operaciones realizadas anteriormente sobre la base de datos, pero lo hacemos ahora explícitamente. Solo lo hacemos para el conjunto de entrenamiento. Como hemos hecho un muestreo aleatorio, esperamos que el conjunto de test tenga la misma distribución:
+
+```{r}
+employables <- nrow(df_train[df_train$CLASS == "Empleable", ])
+non_employables <- nrow(df_train[df_train$CLASS == "No empleable", ])
+
+message("TRAINING:\nEmpleables: ", employables, "    No empleables: ", non_employables)
+```
+
+Es más fácil de interpretar si vemos los porcentajes:
+
+```{r}
+total <- employables + non_employables
+employables <- employables / total * 100
+non_employables <- non_employables / total * 100
+
+message("TRAINING:\nEmpleables: ", employables, "%    No empleables: ", non_employables, "%")
+```
+
+Veamos esto gráficamente:
+
+```{r}
+barplot(prop.table(table(df_train$CLASS)),
+        col = rainbow(2),
+        ylim = c(0, 0.7),
+        main = "Distribución de la empleabilidad en los datos de entrenamient")
+```
+
+Hay cierto desbalanceo hacia la no empleabilidad, aproximadamente un 40-60%. De normal este desbalanceo no es demasiado grave. Además, considerando el desbalanceo esperable dado el contexto en el que estamos (un porcentaje mayoritario no debería ser aceptado para un trabajo), consideramos que no necesitamos aplicar alguna técnica para tratar este desbalanceo.
 
 ## Estudio del supuesto de normalidad
 
@@ -256,3 +288,13 @@ Barlett
 # Validación
 
 ## Validación con matriz de confusión
+
+
+
+
+
+
+<!-- Al final, siempre tenemos las notas a pie de página -->
+<!-- Así que ponemos un título para que está sección se vea correctamente -->
+
+# Notas a pie de página
