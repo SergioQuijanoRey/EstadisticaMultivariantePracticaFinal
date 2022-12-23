@@ -17,12 +17,12 @@ compile FORMATO = "html_document":
 # Muestra en un navegador el fichero compilado
 # Si no esta ya compilado, se realiza dicha compilacion
 view_browser: (compile "html_document")
-    {{BROWSER}} "{{without_extension(NOTEBOOK)}}.html"
+    {{BROWSER}} "{{without_extension(NOTEBOOK)}}.html" &
 
 # Muestra en un lector de PDFs el fichero compilado
 # Si no esta ya compilado, se realiza dicha compilacion
 view_pdf: (compile "pdf_document")
-    {{PDF_VIEWER}} "{{without_extension(NOTEBOOK)}}.pdf"
+    {{PDF_VIEWER}} "{{without_extension(NOTEBOOK)}}.pdf" &
 
 # Elimina todos los archivos generados en la compilacion
 # Deja solo los archivos con el codigo fuente
