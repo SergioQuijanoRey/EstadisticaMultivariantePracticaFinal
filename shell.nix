@@ -25,6 +25,10 @@ let
         # Para leer el fichero excel
         readxl
 
+        # Para mostrar graficos
+        tidyr
+        ggplot2
+
         # Para tener acceso al LSP de R
         languageserver
         languageserversetup

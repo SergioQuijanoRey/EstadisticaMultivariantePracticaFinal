@@ -34,6 +34,10 @@ library(foreign)
 
 # Para leer archivos excel
 library(readxl)
+
+# Para hacer ciertos gráficos
+library(tidyr)
+library(ggplot2)
 ```
 
 Estos paquetes se pueden instalar con la orden `install.packages("<nombre_paquete>")`. Sin embargo, hemos definido todos los paquetes necesarios, de forma declarativa, en el archivo `shell.nix` que se puede encontrar en [este archivo](https://github.com/SergioQuijanoRey/EstadisticaMultivariantePracticaFinal/blob/main/shell.nix).
@@ -88,6 +92,13 @@ Lo primero que tenemos que hacer es eliminar la primera fila del *dataset*. Esta
 
 ```{r}
 df <- df[, -1]
+head(df)
+```
+
+Por comodidad, cambiamos el nombre de las columnas de datos:
+
+```{r}
+colnames(df) <- c("APARIENCIA", "FORMAS HABLAR", "CONDICION FISICA", "AGILIDAD MENTAL", "CONFIANZA", "HAB. PRESENTAR IDEAS", "HABILIDADES COMUNICACION", "RENDIMIENTO ACADEMICO", "CLASS")
 head(df)
 ```
 
@@ -223,6 +234,59 @@ Esto es algo menos del 0.74%, por lo tanto, no es necesario analizar el patrón 
 
 ## Análisis Descriptivo Numérico Clásico
 
+El primer paso es observar la información que nos da la función `summary`. Aunque ya la hemos visto muchas veces, volvemos a consultarla:
+
+```{r}
+summary(df_train)
+```
+
+Veamos también los gráficos de cajas de cada una de las variables. Con esto, será más sencillo comentar los resultados que nos da la función `summary`, que nos da información sobre cuartiles, mínimos, máximos, mediana y media:
+
+```{r}
+boxplot(
+    df_train,
+
+    # Para que los nombres de las variables salgan en vertical
+    las = 2,
+
+    # Doy nombres acortados para que se vea mejor
+    names = c("APARIENCIA", "FORM.HABLAR", "COND.FIS", "AGIL.MENTAL", "CONFIANZA", "PRESENTAR IDEAS", "COMUNICACION", "ACADEMICO", "CLASS")
+)
+```
+
+A partir de esto, podemos ver que:
+
+1. Como ya hemos comentado en [Descripción de la base de datos], ninguna de las variables toma el valor 1, aunque el diseño del estudio se hubiese hecho teniendo esto en mente, y el rendimiento académico tiene como valor mínimo el valor 3
+2. Casi todas las variables tienen valores altos (en la escala $1-5$). Son destacables las variables apariencia física y rendimiento académico
+    - Es de esperar que la mayoría de personas acudan a la entrevista de trabajo con una buena aparencia
+    - Al ser un estudio realizado sobre personas universitarias, es de esperar que su rendimiento sea alto. Además, son universitarios que en un futuro cercano van a estar buscando trabajo, y por tanto estarán a punto de terminar sus estudios universitarios, lo que puede hacer que el rendimiento sea aún más sesgado a lo alto
+3. Las variables más variadas son la condición física, la agilidad mental y la confianza en uno mismo
+4. La habilidad comunicativa es aquella con mediana más baja (sin contar la variable de salida, que tenemos que considerar por separado)
+5. Al estar trabajando con variables discretas, no podemos obtener una información tan fina con esta información como sí podríamos obtener con variables continuas. Además, las variables están en los mismos rangos $1-5$, así que estamos obligados a usar otros recursos para obtener información, previo al ajuste de un modelo, a partir de estos datos
+6. Aunque lo veremos más adelante en [Balanceo de las clases], podemos ver que la clase "No empleable" es la predominante
+
+Veamos ahora los histogramas de las variables:
+
+```{r}
+# Esta grafica la tomamos de https://statisticsglobe.com/histogram-density-for-each-column-data-frame-r
+data_long <- df_train[, -9] %>%                          # Apply pivot_longer function
+    pivot_longer(colnames(df_train[, -9])) %>%
+    as.data.frame()
+
+ggp1 <- ggplot(data_long, aes(x = value)) +    # Draw each column as histogram
+    geom_histogram(bins = 10) +
+    facet_wrap(~ name, scales = "free")
+
+ggp1
+```
+
+Con esta gráfica, podemos ver que:
+
+1. Muchas de las variables (por ejemplo, agilidad mental, condición física, habilidad para presentar ideas, ...) parecen seguir una distribución normal. Esto lo comprobaremos más adelante con un contraste de hipótesis
+2. Tanto el rendimiento académico, como las habilidades de comunicación, no son simétricas
+    - En el caso de las habilidades de comunicación, con más concentración hacia la izquierda
+    - En el caso del rendimiento académico, casi todos los candidatos tienen una valoración de 5
+
 ## Outliers
 
 ## Balanceo de las clases
@@ -268,6 +332,8 @@ Hay cierto desbalanceo hacia la no empleabilidad, aproximadamente un 40-60%. De 
 Barlett
 
 ## Outliers multivariantes
+
+## Gráficos por parejas de variables de entrada
 
 ## Tratar valores perdidos si no los hemos tratado ya
 
