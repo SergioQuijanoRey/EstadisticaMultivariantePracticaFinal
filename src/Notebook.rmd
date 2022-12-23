@@ -15,6 +15,13 @@ output:
 
 # Introducción
 
+Vamos a trabajar con una base de datos sobre la empleabilidad de ciertos estudiantes tras hacer una entrevista de trabajo, a modo de entrenamiento para su futura búsqueda de trabajo.
+
+Tenemos dos objetivos en este trabajo:
+
+1. Construir un modelo que prediga, en base a las métricas recogidas durante la entrevista, si una persona es empleable o no
+2. Estudiar las métricas recogidas, buscando ver cuáles son las más relevantes <!-- TODO -- quizas esto es mentira por lo que voy a hacer mas tarde -->
+
 Notar que todo el código, así como el historial del desarrollo de este, está disponible en [este repositorio de Github](https://github.com/SergioQuijanoRey/EstadisticaMultivariantePracticaFinal)
 
 # Paquetes utilizados
@@ -38,7 +45,17 @@ La base de datos se puede encontrar en el repositorio [Kaggle](https://www.kaggl
 Este *dataset* se compone de 10 columnas y 2983 filas. Las columnas se corresponden con:
 
 1. Identificador numérico del estudiante. Lo llaman nombre del estudiante, pero en verdad se corresponde con una etiqueta numérica del tipo "Student <id>"
-2. Aparencia general. Un valor que va del 1 al 5
+2. Apariencia general
+3. Formas de hablar
+4. Condición física
+5. Agilidad mental
+6. Confianza en si mismo
+7. Habilidad para presentar ideas
+8. Habilidades de comunicación
+9. Rendimiento académico
+10. Empleabilidad
+
+Todas estas variables, salvo el identificador y la empleabilidad, son valores discretos del 1 al 5. La estructura del identificador ya la hemos comentado. La empleabilidad es una variable de tipo texto con los valores `"Employable"` y `"LessEmployable"`. Esta es la variable que queremos predecir a partir de las métricas recogidas durante la entrevista.
 
 Si nos fijamos en el número de filas y los identificadores de los estudiantes, podemos ver que tenemos hasta el identificador 3000, mientras que tenemos 22 filas menos. Esto nos hace pensar que sí que se han procesado los datos, eliminando 22 filas o bien con datos faltantes o bien con *outliers*.
 
@@ -57,18 +74,156 @@ Y ahora, un resumen del *dataset*:
 summary(df)
 ```
 
+A partir del resumen, podemos ver que:
+
+- Aunque las métricas van, en un diseño inicial, del valor 1 al 5, muchas de ellas tienen un rango más acotado (por debajo), puesto que no hubo participantes que obtuviesen los valores mínimos.
+- Todas las variables tienen, como valor mínimo, el 2. Solo la variable `Student Performance Rating` tuvo un valor mínimo de 3
+
+
 # Análisis Exploratorio Univariante
 
+## Procesamiento inicial de los datos
+
+Lo primero que tenemos que hacer es eliminar la primera fila del *dataset*. Esta se corresponde con un identificador de los estudiantes, que no nos va a ser útil para nada:
+
+```{r}
+df <- df[, -1]
+head(df)
+```
+
+## Separación en training / test
+
+Para realizar una posterior validación cruzada, tenemos que separar los datos en dos conjuntos, uno de entrenamiento y otro de test. Además, todo el procesamiento de datos que realicemos, deberá ser de la siguiente forma, para evitar caer en *data snooping*: ^[Para un lector que no esté familiarizado con este concepto, se puede consultar [este recuros](https://web.ma.utexas.edu/users/mks/statmistakes/datasnooping.html)]
+
+- Todo el procesamiento de datos debe aprenderse sobre el conjunto de entrenamiento
+- Este procesamiento aprendido en el conjunto de entrenamiento debe aplicarse ciegamente sobre el conjunto de test
+- Por ejemplo, si se decide estandarizar una variable, se debe aplicar usando la media y desviación del conjunto de entrenamiento. Ese valor, sobre el conjunto de entrenamiento, se aplica después en la normalización del conjunto de test, y no los estadísticos en test
+
+Dicho esto, separamos en los dos conjuntos de datos. Hacemos un muestreo aleatorio porque en muchos conjuntos de datos, el orden de los datos involucra cierto patrón:
+
+```{r}
+# Estableciendo la semilla, hacemos que los resultados sean reproducibles
+set.seed(123456789)
+
+# Cuantos datos queremos en training
+train_percentage <- 0.80
+train_size <- floor(train_percentage * nrow(df))
+
+# Muestreamos los indices de training
+train_indixes <- sample(seq_len(nrow(df)), size = train_size)
+
+# Con los indices, hacemos la separacion
+df_train <- df[train_indixes, ]
+df_test <- df[-train_indixes, ]
+
+# Vemos los tamaños de los datasets obtenidos
+
+message("Conjunto de entrenamiento")
+message(ncol(df_train), " , ", nrow(df_train))
+
+message("Conjunto de test")
+message(ncol(df_test), " , ", nrow(df_test))
+```
+
 ## Recodificaciones o agrupaciones de datos
+
+Por lo que hemos visto previamente, la variable que queremos predecir toma dos valores de tipo texto. Muchos de los métodos de clasificación trabajan (solo, o de forma mejor) con variables de tipo numérico. Así que realizamos el siguiente cambio:
+
+- `Employable -> 1`
+- `LessEmployable -> 0`
+
+Además, haremos que la variable numérica sea un factor, porque ciertas funciones de `R` necesitan esto para trabajar de forma correcta.
+
+```{r}
+# Aplica un cambio de variable a la variable objetivo
+# `Employable -> 1`
+# `LessEmployable -> 0`
+change_target_format <- function(target){
+    if (length(target) > 1){
+        stop("TODO")
+    }
+
+
+    if(target == "Employable"){
+        return(1)
+    } else if (target == "LessEmployable"){
+        return(0)
+    }
+
+    # Esta situacion nunca deberia pasar
+    # Tenemos una variable que no toma ninguno de los dos valores supuestos
+    stop("La variable pasada no es ni 'Employable' ni 'LessEmployable'")
+}
+
+# Aplicamos dicha funcion a la salida
+df_train$CLASS <- sapply(df_train$CLASS, change_target_format)
+
+# Aplicamos un factor a la variable de salida
+df_train <- within(df_train, {
+    CLASS <- factor(CLASS, labels = c("Empleable", "No empleable"))
+})
+
+# Aplicamos el mismo procesamiento al dataframe de test
+df_test$CLASS <- sapply(df_test$CLASS, change_target_format)
+
+# Aplicamos un factor a la variable de salida
+df_test <- within(df_test, {
+    CLASS <- factor(CLASS, labels = c("Empleable", "No empleable"))
+})
+```
+
+Veamos algunos datos de entrenamiento, ahora que hemos hecho la modificación:
+
+```{r}
+# Mostramos algunos datos modificados
+head(df_train)
+```
+
+Y con el resumen del dataframe podemos ver que el cambio ha sido efectivo, a nivel del tipo de datos que estamos manejando:
+
+```{r}
+summary(df_train)
+```
+
+El resto de variables son numéricas discretas, que toman un rango de valores muy pequeño, y por lo tanto no parece necesario que las agrupemos.
 
 ## Valores perdidos
 
 1. % de valores perdidos de cada variable
 2. Patrón aleatorio de aquellas con más de un 5% de valores perdidos
 
+Como ya hemos comentado en [Descripción de la base de datos], sospechamos que el autor de la base de datos ya ha realizado la limpieza de los datos faltantes. A continuación, nos aseguramos de que no haya datos faltantes, ni en entrenamiento ni en test:
+
+```{r}
+sapply(
+    df_train,
+    function(col) {
+        sum(is.na(col))
+    }
+)
+
+sapply(
+    df_test,
+    function(col) {
+        sum(is.na(col))
+    }
+)
+```
+
+Efectivamente, no tenemos valores perdidos, ni en entrenamiento ni en test. Ahora, como suponemos, por lo comentado previamente, que el *dataset* original tenía 3000 entradas, y nos quedamos con 22 menos, tenemos un porcentaje de valores perdidos:
+
+```{r}
+missing_values_perc <- 22 / 3000 * 100
+missing_values_perc
+```
+
+Esto es algo menos del 0.74%, por lo tanto, no es necesario analizar el patrón aleatorio de los valores perdidos. Además, el procesamiento de estos valores perdidos ya ha sido impuesto por el autor de la base de datos, que ha decidido eliminarlos. Esto no nos supone un gran problema puesto que tenemos un volumen de datos considerable.
+
 ## Análisis Descriptivo Numérico Clásico
 
 ## Outliers
+
+## Balanceo de las clases
 
 ## Estudio del supuesto de normalidad
 
