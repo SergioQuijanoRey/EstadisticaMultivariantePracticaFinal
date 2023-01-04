@@ -293,14 +293,19 @@ En las gráficas de cajas anteriores, en [Análisis Descriptivo Numérico Clási
 
 ```{r}
 
-# Comprueba si una columna de datos tiene outliers
-has_outliers <- function(data) {
+# Devuelve el numero de outliers que tiene una columna de datos
+how_many_outliers <- function(data) {
     H <- 1.5 * IQR(data)
     outliers <- which(
         data < quantile(data, 0.25, na.rm = TRUE) - H |
         data > quantile(data, 0.75, na.rm = TRUE) + H
     )
-    return(length(outliers) > 0)
+    return(length(outliers))
+}
+
+# Comprueba si una columna de datos tiene outliers
+has_outliers <- function(data) {
+    return(how_many_outliers(data) > 0)
 }
 
 # No miramos la variable de salida, porque no podemos calcular cuartiles sobre factores
@@ -311,8 +316,50 @@ sapply(df_train[, -9], has_outliers)
 Vemos que, en efecto, solo la variable de la apariencia presenta *outliers*. Ahora, veamos cuántos *outliers* tenemos en dicha variable. Si son relativamente pocos, los eliminaremos. En otro caso, tendremos que sustituirlos por el valor de la media:
 
 ```{r}
-# TODO -- escribir el codigo
+no_outliers <- how_many_outliers(df_train$APARIENCIA)
+perc_outliers <- no_outliers / length(df_train$APARIENCIA) * 100
+message("Nº outliers: ", no_outliers, " --> ", perc_outliers, "%")
 ```
+
+El porcentaje de filas con *outliers* está por debajo del 0.6%, y teniendo en cuenta el volumen de datos, procedemos a borrar aquellas filas con un *outlier* unidimensional en la variable de apariencia (de nuevo, usando un código que hemos adaptado del entregado en la *Entrega Voluntaria*). Aquí es crítico aplicar lo que hemos comentado previamente sobre *data snooping*.
+
+```{r}
+
+# Metricas, que calculamos sobre el conjunto de train, para aplicar el borrado
+# de outliers
+quantiles <- quantile(df_train$APARIENCIA, probs = c(0.25, 0.75), na.rm = FALSE)
+H <- IQR(df_train$APARIENCIA) * 1.5
+lower <- quantiles[1] - H
+upper <- quantiles[2] + H
+
+# Con estos estadisticos, borramos los outliers en train
+rows_prev <- nrow(df_train)
+df_train <- subset(df_train, df_train$APARIENCIA > lower & df_train$APARIENCIA < upper)
+rows_deleted <- rows_prev - nrow(df_train)
+message("TRAIN, hemos borrado ", rows_deleted, " filas, lo que supone un ", rows_deleted / rows_prev * 100, "%")
+
+# Usando los mismos estadisticos, para evitar hacer data snooping, borramos
+# outliers en test
+rows_prev <- nrow(df_test)
+df_test <- subset(df_test, df_test$APARIENCIA > lower & df_test$APARIENCIA < upper)
+rows_deleted <- rows_prev - nrow(df_test)
+message("TEST, hemos borrado ", rows_deleted, " filas, lo que supone un ", rows_deleted / rows_prev * 100, "%")
+```
+
+Ahora, podemos comprobar que no quedan *outliers* en el conjunto de entrenamiento:
+
+```{r}
+sapply(df_train[, -9], has_outliers)
+```
+
+Y en efecto, no tenemos ningún outlier. Veamos (aunque se pueda saber con los datos mostrados previamente), el tamaño de nuestros conjuntos de datos tras los borrados:
+
+```{r}
+nrow(df_train)
+nrow(df_test)
+```
+
+Como era de esperar (pues hemos borrado porcentajes muy bajos de datos), seguimos teniendo conjuntos de datos grandes con los que trabajar.
 
 ## Balanceo de las clases
 
