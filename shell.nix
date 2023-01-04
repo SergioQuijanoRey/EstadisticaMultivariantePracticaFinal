@@ -25,7 +25,7 @@ let
         # Para leer el fichero excel
         readxl
 
-        # Para mostrar graficos
+        # Para mostrar graficos y para hacer interpolacion de strings
         tidyr
         ggplot2
 

@@ -38,6 +38,9 @@ library(readxl)
 # Para hacer ciertos gráficos
 library(tidyr)
 library(ggplot2)
+
+# Para hacer "string interpolation"
+library(stringr)
 ```
 
 Estos paquetes se pueden instalar con la orden `install.packages("<nombre_paquete>")`. Sin embargo, hemos definido todos los paquetes necesarios, de forma declarativa, en el archivo `shell.nix` que se puede encontrar en [este archivo](https://github.com/SergioQuijanoRey/EstadisticaMultivariantePracticaFinal/blob/main/shell.nix). Para usar este entorno de paquetes se puede consultar la [documentación oficial de Nix](https://nixos.org/)
@@ -397,6 +400,79 @@ barplot(prop.table(table(df_train$CLASS)),
 Hay cierto desbalanceo hacia la no empleabilidad, aproximadamente un 40-60%. De normal, este desbalanceo no es demasiado grave. Además, considerando el desbalanceo esperable dado el contexto en el que estamos (un porcentaje mayoritario no debería ser aceptado para un trabajo), consideramos que no necesitamos aplicar alguna técnica para tratar este desbalanceo. Aunque no es algo demasiado complicado de aplicar, por ejemplo, [SMOTE](https://www.statology.org/smote-in-r/)
 
 ## Estudio del supuesto de normalidad
+
+Posteriormente, vamos a usar métodos que dependen de la normalidad (multivariante, y por ende, univariante), así que en esta sección vamos a realizar un estudio sobre este supuesto.
+
+### Exploración gráfica
+
+Antes de plantear un contraste de hipótesis sobre el supuesto de normalidad, veamos primero algunos gráficos que nos van a dar ciertas intuiciones sobre la normalidad o falta de ella en nuestro conjunto de datos. Empecemos con los gráficos cuantil-cualtil o *Q-Q*. Al estar trabajando con variables discretas, con rangos muy pequeños, estos gráficos no nos van a dar demasiada información:
+
+```{r}
+# Para mostrar multiples graficos de forma mas compacta
+par(mfrow=c(2,2))
+
+# Iteramos sobre todas las variables del dataframe
+for(name in names(df_train)){
+
+    # No hacemos el qqplot de la variable de salida
+    if(name == "CLASS"){
+        next()
+    }
+
+    # Aplicamos el qqplot para la variable actual
+    qqnorm(df_train[[name]], main = str_interp("QQPlot de la variable ${name}"))
+    qqline(df_train[[name]])
+
+}
+```
+
+Con estos gráficos podemos ver, cómo de centradas están las entradas según una normal, y cómo de dispersas están las variables para cada uno de los niveles (1, 2, $\ldots$, 5) respecto la normalidad. Con esto, podemos ver que:
+
+1. La variable confianza parece que no sigue una normal, porque en el nivel `2` se desvía demasiado
+2. Lo mismo ocurre con la condición física y con agilidad mental
+3. A formas de hablar le ocurre parecido (falla en el nivel más bajo), pero la desviación no es tan grande como con las otras variables
+4. Algunas variables sí que parecen coincidir correctamente, como por ejemplo el rendimiento académico o las habilidades de comunicación
+
+### Test de hipótesis
+
+Ahora que ya hemos hecho cierta exploración gráfica, pasemos a plantear un test de hipótesis. Sospechamos que ciertas variables sí van a pasar dicho test, pero otras no. Todo esto por lo que hemos comentado en [Exploración gráfica].
+
+Usaremos el **test de Shapiro-Wilk**. La hipótesis nula $H_0$ es que nuestros datos (lo haremos para cada variable), siguen una distribución normal. Por tanto, buscamos no rechazar la hipótesis nula, y por tanto, *p-valores* por encima de $\alpha = 0.05$
+
+```{r}
+msg = ""
+eps <- 0.05
+for(name in names(df_train)){
+    # No miramos la normalidad de la variable de salida
+    if(name == "CLASS"){
+        next()
+    }
+
+    # Tomamos el p-value del test
+    p_value <- shapiro.test(df_train[[name]])$p.value
+
+    # Construimos el mensaje para el usuario que lee los datos
+    msg <- str_interp("${msg}\nVariable ${name} tiene p-value: ${p_value}")
+
+    # Comprobamos si es normal o no, segun el test
+    if(p_value > eps) {
+        msg <- str_interp("${msg}  <- Es normal")
+    } else {
+        msg <- str_interp("${msg}  <- NO ES NORMAL!!!! ")
+    }
+}
+
+# Mostramos los resultados al usuario
+message(msg)
+```
+
+Claramente, no tenemos normalidad univariante, además, con un margen enorme. Así que posteriormente, cuando comprobemos la normalidad multivariante, tampoco la obtendremos.
+
+Nuestra sospecha de que ciertas variables sí seguirían una normal no se sostiene frente a estos resultados.
+
+Vistos los gráficos *qqplot*, podemos pensar que un problema fundamental a la hora de realizar estos tests es que las variables con las que estamos trabajando no son continuas. Además, son variables discretas que toman muy pocos valores (5 como máximo, 2 o 3 valores en la mayoría de casos).
+
+Esto será un problema para aplicar ciertos métodos, como los del discriminante lineal o cuadrático. Tendremos que fijarnos más en el cuadrático, porque es más robusto frente a la falta de normalidad. Pero no sabemos si será capaz de funcionar bien con una falta tan grave de normalidad.
 
 ----------------------------------------------------------------------------------------------------
 
