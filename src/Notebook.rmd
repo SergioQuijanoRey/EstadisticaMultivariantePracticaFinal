@@ -40,7 +40,7 @@ library(tidyr)
 library(ggplot2)
 ```
 
-Estos paquetes se pueden instalar con la orden `install.packages("<nombre_paquete>")`. Sin embargo, hemos definido todos los paquetes necesarios, de forma declarativa, en el archivo `shell.nix` que se puede encontrar en [este archivo](https://github.com/SergioQuijanoRey/EstadisticaMultivariantePracticaFinal/blob/main/shell.nix).
+Estos paquetes se pueden instalar con la orden `install.packages("<nombre_paquete>")`. Sin embargo, hemos definido todos los paquetes necesarios, de forma declarativa, en el archivo `shell.nix` que se puede encontrar en [este archivo](https://github.com/SergioQuijanoRey/EstadisticaMultivariantePracticaFinal/blob/main/shell.nix). Para usar este entorno de paquetes se puede consultar la [documentación oficial de Nix](https://nixos.org/)
 
 # Descripción de la base de datos
 
@@ -153,7 +153,7 @@ Además, haremos que la variable numérica sea un factor, porque ciertas funcion
 # `LessEmployable -> 0`
 change_target_format <- function(target){
     if (length(target) > 1){
-        stop("TODO")
+        stop("Se ha pasado un vector en vez de un unico valor, que es lo que espera la funcion")
     }
 
 
@@ -188,7 +188,8 @@ df_test <- within(df_test, {
 Veamos algunos datos de entrenamiento, ahora que hemos hecho la modificación:
 
 ```{r}
-# Mostramos algunos datos modificados
+# Mostramos algunas entradas de los datos tras haber hecho la recodificacion de
+# la variable de salida
 head(df_train)
 ```
 
@@ -201,9 +202,6 @@ summary(df_train)
 El resto de variables son numéricas discretas, que toman un rango de valores muy pequeño, y por lo tanto no parece necesario que las agrupemos.
 
 ## Valores perdidos
-
-1. % de valores perdidos de cada variable
-2. Patrón aleatorio de aquellas con más de un 5% de valores perdidos
 
 Como ya hemos comentado en [Descripción de la base de datos], sospechamos que el autor de la base de datos ya ha realizado la limpieza de los datos faltantes. A continuación, nos aseguramos de que no haya datos faltantes, ni en entrenamiento ni en test:
 
@@ -268,12 +266,13 @@ A partir de esto, podemos ver que:
 Veamos ahora los histogramas de las variables:
 
 ```{r}
-# Esta grafica la tomamos de https://statisticsglobe.com/histogram-density-for-each-column-data-frame-r
-data_long <- df_train[, -9] %>%                          # Apply pivot_longer function
+# Esta grafica la copiamos, sin apenas modificaciones, de:
+# https://statisticsglobe.com/histogram-density-for-each-column-data-frame-r
+data_long <- df_train[, -9] %>%
     pivot_longer(colnames(df_train[, -9])) %>%
     as.data.frame()
 
-ggp1 <- ggplot(data_long, aes(x = value)) +    # Draw each column as histogram
+ggp1 <- ggplot(data_long, aes(x = value)) +
     geom_histogram(bins = 10) +
     facet_wrap(~ name, scales = "free")
 
@@ -284,16 +283,45 @@ Con esta gráfica, podemos ver que:
 
 1. Muchas de las variables (por ejemplo, agilidad mental, condición física, habilidad para presentar ideas, ...) parecen seguir una distribución normal. Esto lo comprobaremos más adelante con un contraste de hipótesis
 2. Tanto el rendimiento académico, como las habilidades de comunicación, no son simétricas
-    - En el caso de las habilidades de comunicación, con más concentración hacia la izquierda
-    - En el caso del rendimiento académico, casi todos los candidatos tienen una valoración de 5
+    - En el caso de las habilidades de comunicación, con más concentración hacia la izquierda. Esto ya lo intuíamos al ver los gráficos de bigotes. La habilidad de comunicación es la que peor se les da a los candidatos, en relación a las otras variables
+    - En el caso del rendimiento académico, casi todos los candidatos tienen una valoración de 5. La variable de la que podríamos esperar mayor relevancia a la hora de valorar la empleabilidad de un candidato, es de las que menos variabilidad presenta
+3. Casi todas las variables se concentran en el rango $[3, 5]$, como ya sospechábamos previamente al ver un resumen rápido de los datos
 
 ## Outliers
+
+En las gráficas de cajas anteriores, en [Análisis Descriptivo Numérico Clásico], hemos visto que la única variable que presenta *outliers* es la apariencia. Pero veamos esto de forma más clara usando el siguiente código (que se basa en el entregado en las *Entregas Voluntarias* de *PRADO*):
+
+```{r}
+
+# Comprueba si una columna de datos tiene outliers
+has_outliers <- function(data) {
+    H <- 1.5 * IQR(data)
+    outliers <- which(
+        data < quantile(data, 0.25, na.rm = TRUE) - H |
+        data > quantile(data, 0.75, na.rm = TRUE) + H
+    )
+    return(length(outliers) > 0)
+}
+
+# No miramos la variable de salida, porque no podemos calcular cuartiles sobre factores
+# Ademas, no tiene sentido buscar valores atípicos en la salida que queremos predecir
+sapply(df_train[, -9], has_outliers)
+```
+
+Vemos que, en efecto, solo la variable de la apariencia presenta *outliers*. Ahora, veamos cuántos *outliers* tenemos en dicha variable. Si son relativamente pocos, los eliminaremos. En otro caso, tendremos que sustituirlos por el valor de la media:
+
+```{r}
+# TODO -- escribir el codigo
+```
 
 ## Balanceo de las clases
 
 Esto se ha podido ver en operaciones realizadas anteriormente sobre la base de datos, pero lo hacemos ahora explícitamente. Solo lo hacemos para el conjunto de entrenamiento. Como hemos hecho un muestreo aleatorio, esperamos que el conjunto de test tenga la misma distribución:
 
 ```{r}
+# Separamos el dataframe en dos, uno con entradas de personas empleables y otro
+# con entradas de personas no empleables. Contamos el numero de filas de cada
+# sub-dataframe
 employables <- nrow(df_train[df_train$CLASS == "Empleable", ])
 non_employables <- nrow(df_train[df_train$CLASS == "No empleable", ])
 
@@ -319,7 +347,7 @@ barplot(prop.table(table(df_train$CLASS)),
         main = "Distribución de la empleabilidad en los datos de entrenamient")
 ```
 
-Hay cierto desbalanceo hacia la no empleabilidad, aproximadamente un 40-60%. De normal este desbalanceo no es demasiado grave. Además, considerando el desbalanceo esperable dado el contexto en el que estamos (un porcentaje mayoritario no debería ser aceptado para un trabajo), consideramos que no necesitamos aplicar alguna técnica para tratar este desbalanceo.
+Hay cierto desbalanceo hacia la no empleabilidad, aproximadamente un 40-60%. De normal, este desbalanceo no es demasiado grave. Además, considerando el desbalanceo esperable dado el contexto en el que estamos (un porcentaje mayoritario no debería ser aceptado para un trabajo), consideramos que no necesitamos aplicar alguna técnica para tratar este desbalanceo. Aunque no es algo demasiado complicado de aplicar, por ejemplo, [SMOTE](https://www.statology.org/smote-in-r/)
 
 ## Estudio del supuesto de normalidad
 
