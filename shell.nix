@@ -29,6 +29,9 @@ let
         tidyr
         ggplot2
 
+        # Para ver la matriz de correlacion como un grafico de barras
+        lares
+
         # Para tener acceso al LSP de R
         languageserver
         languageserversetup

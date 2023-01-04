@@ -41,6 +41,9 @@ library(ggplot2)
 
 # Para hacer "string interpolation"
 library(stringr)
+
+# Para visualizar la matriz de correlacion
+library(ggcorrplot)
 ```
 
 Estos paquetes se pueden instalar con la orden `install.packages("<nombre_paquete>")`. Sin embargo, hemos definido todos los paquetes necesarios, de forma declarativa, en el archivo `shell.nix` que se puede encontrar en [este archivo](https://github.com/SergioQuijanoRey/EstadisticaMultivariantePracticaFinal/blob/main/shell.nix). Para usar este entorno de paquetes se puede consultar la [documentación oficial de Nix](https://nixos.org/)
@@ -479,6 +482,42 @@ Esto será un problema para aplicar ciertos métodos, como los del discriminante
 # Análisis exploratorio multivariante
 
 ## Comprobar supuestos de correlación entre variables
+
+### Exploración gráfica
+
+Empezamos viendo esto de forma gráfica. Además, para el estudio posterior que haremos sobre el problema, esta exploración nos será de gran utilidad. Empezamos mostrando una función auxiliar, para lidiar con que ciertas funciones gráficas no trabajan bien con factores:
+
+```{r}
+# Funcion que usamos para que el factor de la variable de salida se transforme a un numero normal. Ciertas funciones para hacer graficas requieren esto, y lo vamos a usar bastante
+dont_use_factor <- function(df) {
+    return(transform(df, CLASS = as.numeric(CLASS)))
+}
+```
+
+Ahora, mostramos la matriz de correlaciones:
+
+```{r}
+corr_matrix <- cor(dont_use_factor(df_train))
+ggcorrplot(corr_matrix)
+```
+
+Con esta matriz de correlaciones, podemos ver que:
+
+1. No hay ninguna variable que esté altamente correlada con la variable que queremos predecir
+2. La variable rendimiento académico no está apenas correlada con ninguna otra variable
+    - Empezamos a pensar que, con todo lo que hemos visto, esta variable va a ser muy poco útil para predecir la empleabilidad de una persona
+    - Es destacable pues, en una situación de plena meritocracia, esta variable pensamos que debería ser de las más importantes
+3. El resto de variables sí que parecen estar correladas entre ellas. No somos capaces de ver grupos claros que podamos usar para una posterior reducción de dimensionalidad. Así que deberemos usar alguno de los métodos vistos en clase para elegir esta reducción
+
+<!-- TODO -- hacer esto mismo con un gráfico de barras, que es más interpretable -->
+
+```{r}
+# Con esto se puede hacer lo que busco, pero hay que instalar el paquete
+# library(lares)
+# corr_cross(mtcars, rm.na = T, max_pvalue = 0.05, top = 15, grid = T)
+```
+
+### Contraste de hipótesis
 
 Barlett
 
