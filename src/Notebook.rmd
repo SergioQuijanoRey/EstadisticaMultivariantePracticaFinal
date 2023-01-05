@@ -44,6 +44,13 @@ library(stringr)
 
 # Para visualizar la matriz de correlacion
 library(ggcorrplot)
+
+# Para hacer graficos de la matriz de correlacion pero visualizandola como un
+# grafico de barras
+library(lares)
+
+# Para hacer el test de Bartlett
+library(psych)
 ```
 
 Estos paquetes se pueden instalar con la orden `install.packages("<nombre_paquete>")`. Sin embargo, hemos definido todos los paquetes necesarios, de forma declarativa, en el archivo `shell.nix` que se puede encontrar en [este archivo](https://github.com/SergioQuijanoRey/EstadisticaMultivariantePracticaFinal/blob/main/shell.nix). Para usar este entorno de paquetes se puede consultar la [documentación oficial de Nix](https://nixos.org/)
@@ -262,7 +269,7 @@ A partir de esto, podemos ver que:
 
 1. Como ya hemos comentado en [Descripción de la base de datos], ninguna de las variables toma el valor 1, aunque el diseño del estudio se hubiese hecho teniendo esto en mente, y el rendimiento académico tiene como valor mínimo el valor 3
 2. Casi todas las variables tienen valores altos (en la escala $1-5$). Son destacables las variables apariencia física y rendimiento académico
-    - Es de esperar que la mayoría de personas acudan a la entrevista de trabajo con una buena aparencia
+    - Es de esperar que la mayoría de personas acudan a la entrevista de trabajo con una buena apariencia
     - Al ser un estudio realizado sobre personas universitarias, es de esperar que su rendimiento sea alto. Además, son universitarios que en un futuro cercano van a estar buscando trabajo, y por tanto estarán a punto de terminar sus estudios universitarios, lo que puede hacer que el rendimiento sea aún más sesgado a lo alto
 3. Las variables más variadas son la condición física, la agilidad mental y la confianza en uno mismo
 4. La habilidad comunicativa es aquella con mediana más baja (sin contar la variable de salida, que tenemos que considerar por separado)
@@ -479,7 +486,7 @@ Esto será un problema para aplicar ciertos métodos, como los del discriminante
 
 ----------------------------------------------------------------------------------------------------
 
-# Análisis exploratorio multivariante
+# Análisis Exploratorio Multivariante
 
 ## Comprobar supuestos de correlación entre variables
 
@@ -509,19 +516,110 @@ Con esta matriz de correlaciones, podemos ver que:
     - Es destacable pues, en una situación de plena meritocracia, esta variable pensamos que debería ser de las más importantes
 3. El resto de variables sí que parecen estar correladas entre ellas. No somos capaces de ver grupos claros que podamos usar para una posterior reducción de dimensionalidad. Así que deberemos usar alguno de los métodos vistos en clase para elegir esta reducción
 
-<!-- TODO -- hacer esto mismo con un gráfico de barras, que es más interpretable -->
+Ahora, usando un gráfico de barras, podemos visualizar cuáles son los pares de variables que más correladas están entre sí:
+
+<!-- Eliminamos los mensajes de advertencia y otros logs al usar la funcion grafica -->
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+corr_cross(df_train, rm.na = TRUE, max_pvalue = 0.05, top = 15, grid = TRUE)
+```
+
+A partir de este gráfico podemos ver que:
+
+1. La confianza está altamente correlada con, en primer lugar, la agilidad mental, y en segundo lugar, la condición física
+2. En menor grado, la confianza está correlada con la habilidad para presentar ideas y habilidad de comunicación, prácticamente al mismo nivel
+3. Aún en menor grado, la confianza está correlada con las formas de hablar
+4. Parece que la variable **confianza** va a ser muy relevante. De los 6 pares de variables más correladas, 5 de esos pares involucran a la confianza
+
+Usando la misma función, podemos ver correlaciones en función de si estamos trabajando con personas empleables o no empleables. Empezamos viendo los **empleables**:
 
 ```{r}
-# Con esto se puede hacer lo que busco, pero hay que instalar el paquete
-# library(lares)
-# corr_cross(mtcars, rm.na = T, max_pvalue = 0.05, top = 15, grid = T)
+employables <- df_train[df_train$CLASS == "Empleable", ]
+
+corr_cross(
+    employables,
+    rm.na = TRUE,
+    max_pvalue = 0.05,
+    top = 15,
+    grid = TRUE,
+)
+
 ```
+
+Ahora veamos los **no empleables**:
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+non_employables <- df_train[df_train$CLASS == "No empleable", ]
+corr_cross(
+    non_employables,
+    rm.na = TRUE,
+    max_pvalue = 0.05,
+    top = 15,
+    grid = TRUE,
+)
+```
+
+Con esto, vemos que:
+
+1. En los empleables, la apariencia está algo correlada inversamente con el rendimiento académico. Esto mismo ocurre en los no empleables. En ambos casos es una correlación negativa muy débil.
+2. En ambos casos, y como ya hemos visto previamente, la confianza es la variable que más correlada está con otras variables, lo que nos hace sospechar que va a ser un concepto importante a la hora de realizar la reducción de la dimensionalidad
+3. Lo mismo ocurre, en menor grado, con la apariencia, que está bastante correlada con otro grupo de variables
+4. En el caso de los no empleables, confianza y apariencia están negativamente correladas (aunque de forma débil) con el rendimiento académico. Por ello sospechamos que:
+    - El rendimiento académico no es decisivo a la hora de decidir sobre la empleabilidad
+    - Es más relevante la apariencia y la confianza, que no están correladas de forma clara con el rendimiento académico. Es decir, una persona con un buen rendimiento depende de la confianza y apariencia. Y dos personas con el mismo rendimiento pueden tener dos confianzas / apariencias totalmente distintas, con cierto sesgo hacia unos valores confianza / apariencia bajos
+
 
 ### Contraste de hipótesis
 
-Barlett
+Una vez hecha esta exploración gráfica, pasamos a comprobar el supuesto de correlación de variables con un test de hipótesis. Por la exploración previa pensamos que dicho test va a pasar sin problemas.
+
+Usaremos el *test de esfericidad de Bartlett*. Con dicho *test* buscamos ver que las variables están correlacionadas de alguna forma. Para ello, la hipótesis nula $H_0$ es que la matriz de correlaciones es la identidad. Es decir, que las variables no están correlacionadas. Para ello en realidad busca ver que $det(corr_{matrix}) = 1$.
+
+```{r}
+# Para la matriz de correlacion, usamos valores numericos en vez de factores
+corr_matrix <- cor(dont_use_factor(df_train))
+
+# Aplicamos el test sobre la matriz de correlaciones
+cortest.bartlett(corr_matrix)
+```
+
+El *p-value* es prácticamente cero, por tanto $p-value << 0.05$. Con ello, rechazamos $H_0$ y podemos pensar que las variables están correlacionadas de forma significativa. Por tanto, podemos pensar que podemos realizar predicciones con estos datos y que puede ser útil una reducción de la dimensionalidad.
 
 ## Outliers multivariantes
+
+Previamente ya hemos tratado los *outliers* de forma univariante. Aunque en el guión de las prácticas no se diga nada, vamos a tratar de localizar y borrar *outliers* multivariantes. Para ello, vamos a usar la **distancia Mahalanobis** de los puntos a su media. Sabemos que la distancia Mahalanobis sigue una distribución chi cuadrado con $k$ grados de libertad, con $k$ el número de variables con las que estamos trabajando. Podemos usar esto y un valor de $alpha = 0.001$ para poner un punto de corte y borrar *outliers* según este criterio^[Esto lo tomo del siguiente [recurso online](https://www.r-bloggers.com/2019/01/a-new-way-to-handle-multivariate-outliers/)]:
+
+```{r}
+# Parametro alpha con el que realizamos el corte
+alpha <- .001
+
+# Solo nos quedamos con las variables de entrada
+# No consideramos la variable de salida
+df_train_input <- df_train[, 1:8]
+
+# Calculamos las distancias mahalanobis
+md <- mahalanobis(df_train_input, center = colMeans(df_train_input), cov = cov(df_train_input))
+
+# Aplicamos el punto de corte
+cutoff <- (qchisq(p = 1 - alpha, df = ncol(df_train_input)))
+
+# Tomamos los indices de los outliers
+outliers_indixes <- which(md > cutoff)
+
+# Borramos sobre todo el dataframe
+# Tomamos metricas para saber cuantos datos borramos
+rows_prev <- nrow(df_train)
+df_train <- df_train[-outliers_indixes, ]
+
+rows_after <- nrow(df_train)
+deleted_rows <- rows_prev - rows_after
+
+# Mostramos cuantas filas borramos
+message("Hemos borrado ", deleted_rows, " filas, lo que supone un ", rows_deleted / rows_prev * 100, "%")
+```
+
+El borrado de filas es por debajo del 0.1%, así que no supone un porcentaje significativo y nuestro conjunto de datos sigue siendo lo suficientemente grande.
+
+No lo aplicamos en *test* para no caer en *data snooping*. Para aplicar esta técnica sobre el conjunto de *test*, deberíamos volver a calcular ciertas métricas sobre dicho conjunto de *test*, así que consideramos que es una mejor opción no tratar los *outliers* multivariantes en *test*. Con esto, esperamos que los modelos aprendidos sobre el conjunto de entrenamiento generalicen correctamente, siendo robustos frente a casos extremos nunca vistos.
 
 ## Gráficos por parejas de variables de entrada
 
@@ -530,6 +628,10 @@ Barlett
 ## Reducción de la dimensionalidad con componentes principales o variables latentes
 
 ## Estudiar el supuesto de normalidad multivariante
+
+----------------------------------------------------------------------------------------------------
+
+# Otros procesamientos de datos
 
 ----------------------------------------------------------------------------------------------------
 
