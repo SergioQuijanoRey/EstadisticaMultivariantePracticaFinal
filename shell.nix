@@ -32,6 +32,9 @@ let
         # Para ver la matriz de correlacion como un grafico de barras
         lares
 
+        # Para estandarizar training / test sin hacer data snooping
+        caret
+
         # Para tener acceso al LSP de R
         languageserver
         languageserversetup

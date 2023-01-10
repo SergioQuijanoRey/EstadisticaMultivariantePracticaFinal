@@ -51,6 +51,9 @@ library(lares)
 
 # Para hacer el test de Bartlett
 library(psych)
+
+# Para normalizar datos
+library(caret)
 ```
 
 Estos paquetes se pueden instalar con la orden `install.packages("<nombre_paquete>")`. Sin embargo, hemos definido todos los paquetes necesarios, de forma declarativa, en el archivo `shell.nix` que se puede encontrar en [este archivo](https://github.com/SergioQuijanoRey/EstadisticaMultivariantePracticaFinal/blob/main/shell.nix). Para usar este entorno de paquetes se puede consultar la [documentación oficial de Nix](https://nixos.org/)
@@ -621,17 +624,35 @@ El borrado de filas es por debajo del 0.1%, así que no supone un porcentaje sig
 
 No lo aplicamos en *test* para no caer en *data snooping*. Para aplicar esta técnica sobre el conjunto de *test*, deberíamos volver a calcular ciertas métricas sobre dicho conjunto de *test*, así que consideramos que es una mejor opción no tratar los *outliers* multivariantes en *test*. Con esto, esperamos que los modelos aprendidos sobre el conjunto de entrenamiento generalicen correctamente, siendo robustos frente a casos extremos nunca vistos.
 
+
 ## Gráficos por parejas de variables de entrada
 
 ## Tratar valores perdidos si no los hemos tratado ya
+
+## Re-escalado de los datos
+
+Ahora que ya hemos tratado los *outliers*, tanto de forma univariante como multivariante, y previo a aplicar técnicas muy sensibles a variables con escalas distintas, aplicamos ahora un re-escalado de los datos.
+
+Tenemos dos alternativas: escalar y estandarizar las variables. Como hemos visto que hemos tenido problemas con la normalidad de los datos, aplicamos **estandarización** para tratar de suavizar algo este problema. Esto es, restamos la media y dividimos por la desviación. De nuevo, para evitar **data snooping**, hacemos esto con la media y desviación computadas sobre el conjunto de entrenamiento, y lo aplicamos tanto en entrenamiento como en *test*:
+
+```{r}
+# Tomamos los parametros con los que vamos a normalizar del conjunto de
+# entrenamiento. Ademas, solo normalizamos las variables de entrada, no la
+# variable de salida
+normalization_parameters <- preProcess(df_train[, 1:8])
+
+# Aplicamos dichos parametros en entrenamiento y en test
+df_train[, 1:8] <- predict(normalization_parameters, df_train[, 1:8])
+df_test[, 1:8] <- predict(normalization_parameters, df_test[, 1:8])
+
+# Veamos las primeras entradas en entrenamiento
+head(df_train)
+```
 
 ## Reducción de la dimensionalidad con componentes principales o variables latentes
 
 ## Estudiar el supuesto de normalidad multivariante
 
-----------------------------------------------------------------------------------------------------
-
-# Otros procesamientos de datos
 
 ----------------------------------------------------------------------------------------------------
 
