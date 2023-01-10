@@ -54,6 +54,9 @@ library(psych)
 
 # Para normalizar datos
 library(caret)
+
+# Para mostrar algunas graficas sobre PCA
+library("factoextra")
 ```
 
 Estos paquetes se pueden instalar con la orden `install.packages("<nombre_paquete>")`. Sin embargo, hemos definido todos los paquetes necesarios, de forma declarativa, en el archivo `shell.nix` que se puede encontrar en [este archivo](https://github.com/SergioQuijanoRey/EstadisticaMultivariantePracticaFinal/blob/main/shell.nix). Para usar este entorno de paquetes se puede consultar la [documentación oficial de Nix](https://nixos.org/)
@@ -678,9 +681,6 @@ Aplicamos dicha técnica y, más adelante, en [Elección del número de componen
 # pero todavia no hemos modificado el dataframe para usar una transformacion
 # concreta
 df_train_pca_transf <- prcomp(df_train[, 1:8], scale = TRUE, center = TRUE)
-
-# Añadimos la columna de salida
-df_train_pca_transf$CLASS <- df_train$CLASS
 ```
 
 Veamos el resumen de la técnica aplicada:
@@ -783,9 +783,80 @@ De nuevo, esto nos indica que debemos usar **dos componentes principales**.
 Ahora que hemos decidido usar dos componentes principales, aplicamos dicha técnica, como ya hemos comentado, sin caer en realizar *data snooping*:
 
 ```{r}
+# Calculamos la transformacion sobre el conjunto de entrenamiento
+# Usamos `rank = 2` para usar solo dos componentes principales
+df_train_pca_transf <- prcomp(
+    df_train[, 1:8],
+    scale = TRUE,
+    center = TRUE,
+    rank = 2,
+)
 
+# La aplicamos para generar un nuevo conjunto de entrenamiento
+# Creamos un nuevo dataframe para preservar los datos originales
+df_train_pca <- predict(df_train_pca_transf, newdata = df_train)
+
+# Añadimos la variables de salida, que no ha participado en todo el proceso del
+# estudio PCA
+df_train_pca <- cbind(df_train_pca, df_train$CLASS)
+
+# Añadimos los nombres adecuados
+colnames(df_train_pca) <- c("PC1", "PC2", "CLASS")
+
+# Mostramos algunas entradas del nuevo dataframe
+head(df_train_pca)
 ```
 
+Hacemos lo mismo para el conjunto de test. Usamos los parametros aprendidos sobre entrenamiento para evitar hacer *data snooping*:
+
+
+```{r}
+df_test_pca <- predict(df_train_pca_transf, newdata = df_test)
+df_test_pca <- cbind(df_test_pca, df_test$CLASS)
+colnames(df_test_pca) <- c("PC1", "PC2", "CLASS")
+```
+
+### Exploración de los resultados
+
+En primer lugar, podemos ver gráficamente los nuevos datos, pues solo tenemos dos componentes principales:
+
+```{r}
+plot(df_train_pca[, 1], df_train_pca[, 2], col = c("red", "blue")[df_train_pca[, 3]])
+```
+
+*PCA* no ha conseguido separar claramente las dos clases. Esto es normal, puesto que el objetivo y el planteamiento de la técnica no es este. Viendo esto, parece que un discriminante lineal o cuadrático no va a ser suficiente para clasificar correctamente estos datos, y quizás deberemos usar algún modelo más avanzado de clasificación.
+
+Ahora, veamos la relevancia de las variables en cada una de las componentes principales:
+
+```{r}
+fviz_pca_var(
+    # Esta funcion actua sobre el objeto devuelto por la funcion prcomp
+    df_train_pca_transf,
+
+    repel=TRUE,
+    col.var="cos2",
+    legend.title="Distancia"
+)+theme_bw()
+```
+
+Con esto, vemos que:
+
+1. La segunda dimensión está compuesta prácticamente del rendimiento académico. Esto supone un 14% de la variabilidad explicada.
+2. La primera dimensión está compuesta por el resto de variables. Con mayor fuerza, destacan la agilidad mental, condición física, habilidades de comunicación y confianza. Con menor relevancia, tenemos la habilidad para presentar ideas y la apariencia
+3. Esto parece confirmar lo que hemos comentado previamente: el rendimiento académico tiene muy poco que ver con las otras variables, que tienen una mayor relevancia
+
+Veamos ahora cada uno de los individuos según esta transformación:
+
+```{r}
+fviz_pca_ind(
+    # Esta funcion actua sobre el objeto devuelto por la funcion prcomp
+    df_train_pca_transf,
+    col.ind = "contrib",
+    gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+    repel=TRUE,
+    legend.title="Contrib.var"
+)+theme_bw()
+```
 
 ## Reducción de la dimensionalidad con variables latentes
 

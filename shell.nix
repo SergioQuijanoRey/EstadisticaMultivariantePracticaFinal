@@ -35,6 +35,9 @@ let
         # Para estandarizar training / test sin hacer data snooping
         caret
 
+        # Para mostrar algunas visualizaciones sobre PCA
+        factoextra
+
         # Para tener acceso al LSP de R
         languageserver
         languageserversetup
