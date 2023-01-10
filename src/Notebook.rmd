@@ -778,6 +778,8 @@ De nuevo, esto nos indica que debemos usar **dos componentes principales**.
 
 **Conclusión**: aunque no expliquemos al menos el 80% de la variabilidad, 3 de los 4 métodos nos han indicado que debemos usar dos componentes principales
 
+> Notar que hemos explicado, en la tarea de entrega obligatoria, qué son estos métodos y cómo se interpretan
+
 ### Aplicación de la técnica con el número de componentes escogido
 
 Ahora que hemos decidido usar dos componentes principales, aplicamos dicha técnica, como ya hemos comentado, sin caer en realizar *data snooping*:
@@ -858,8 +860,77 @@ fviz_pca_ind(
 )+theme_bw()
 ```
 
-## Reducción de la dimensionalidad con variables latentes
+## Reducción de la dimensionalidad con variables latentes (análisis factorial)
 
+### ¿Tiene sentido el Análisis Factorial?
+
+En [Comprobar supuestos de correlación entre variables] ya hemos comprobado que las variables no son independientes. Por tanto, tiene sentido aplicar esta técnica.
+
+Además, ya hemos realizado un tratamiento de los *outliers*, tanto a nivel univariante como a nivel multivariante.
+
+### Elección del número de componentes principales
+
+**Primer método**: **método del codo**:
+
+```{r}
+scree(df_train[, 1:8])
+```
+
+Según este método, el número óptimo de **factores latentes es uno**.
+
+**Segundo método**: **análisis paralelo**:
+
+```{r}
+# Para evitar que se quede computando indefinidamente, indicamos que queremos
+# usar solo un core del ordenador
+options(mc.cores = 1)
+
+# Con esto, ya podemos lanzar la funcion sin ningún problema
+fa.parallel(
+    df_train[, 1:8],
+    n.obs = 200,
+    fa = "fa",
+    fm = "minres"
+)
+```
+
+Visualmente, este método también nos indica que el número óptimo de **factores latentes es dos**. Sin embargo, la función nos dice por un mensaje que el **número de factores sea dos**
+
+**Conclusiones**:
+
+1. Usaremos un único factor latente, aunque podríamos usar dos factores latentes
+2. Esto coincide en parte con la información que hemos obtenido de aplicar *PCA*
+    - Seguramente tengamos una variable que es combinación de todas salvo el rendimiento académico
+    - Y seguramente si consideramos dos factores latentes, el segundo sea el asociado con el rendimiento académico
+
+### Aplicación de un modelo concreto
+
+Ahora, calculamos un modelo con dos factores latentes, para comprobar las sospechas a raíz de la exploración anterior. De nuevo, hay que tener cuidado con no caer en *data snooping*. Usamos directamente máxima verosimilitud, porque en las clases de prácticas hemos visto que nos han dado mejores resultados.
+
+```{r}
+modelo_varimax <- fa(
+    df_train[, 1:8],
+    nfactors = 2,
+    rotate = "varimax",
+    fa="mle"
+)
+```
+
+Mostramos la matriz de pesos factorial:
+
+```{r}
+print(modelo_varimax$loadings,cut=0)
+```
+
+Veamos esto de una forma mucho más sencilla de interpretar:
+
+```{r}
+fa.diagram(modelo_varimax)
+```
+
+Esta gráfica **confirma completamente nuestras sospechas**: tenemos una variable latente que combina todas aquellas variables que no son el rendimiento académico, y una segunda variable latente para representar el rendimiento académico. Además, por todo lo que hemos visto, el rendimiento académico es menos relevante que las otras variables, y por tanto, **podemos pensar que esta variable latente es menos relevante que la otra**.
+
+<!-- TODO -- mirar si es suficiente con una variable latente -->
 
 ## Estudiar el supuesto de normalidad multivariante
 
