@@ -625,9 +625,9 @@ El borrado de filas es por debajo del 0.1%, así que no supone un porcentaje sig
 No lo aplicamos en *test* para no caer en *data snooping*. Para aplicar esta técnica sobre el conjunto de *test*, deberíamos volver a calcular ciertas métricas sobre dicho conjunto de *test*, así que consideramos que es una mejor opción no tratar los *outliers* multivariantes en *test*. Con esto, esperamos que los modelos aprendidos sobre el conjunto de entrenamiento generalicen correctamente, siendo robustos frente a casos extremos nunca vistos.
 
 
-## Gráficos por parejas de variables de entrada
-
 ## Tratar valores perdidos si no los hemos tratado ya
+
+En la sección [Valores Perdidos] ya hemos hablado sobre el tratamiento de valores perdidos. No hay nada que añadir al considerar el problema de forma multivariante, así que no añadimos nada y nos referimos a dicha sección para más información sobre el tratamiento.
 
 ## Re-escalado de los datos
 
@@ -649,7 +649,146 @@ df_test[, 1:8] <- predict(normalization_parameters, df_test[, 1:8])
 head(df_train)
 ```
 
-## Reducción de la dimensionalidad con componentes principales o variables latentes
+Ahora podemos ver que tenemos media cero y desviación uno:
+
+```{r}
+# Medias de las variables de entrada
+sapply(df_train[, 1:8], mean)
+
+# Desviaciones de las variables de entrada
+sapply(df_train[, 1:8], sd)
+```
+
+## Reducción de la dimensionalidad con componentes principales
+
+### ¿Tiene sentido aplicar PCA?
+
+En [Comprobar supuestos de correlación entre variables] ya hemos comprobado que las variables no son independientes. Por tanto, tiene sentido aplicar esta técnica.
+
+Además, ya hemos realizado un tratamiento de los *outliers*, tanto a nivel univariante como a nivel multivariante.
+
+### Aplicación de PCA
+
+Aplicamos dicha técnica y, más adelante, en [Elección del número de componentes principales], elegiremos el número de componentes con las que nos quedamos. Además, ahora solo lo aplicamos sobre el conjunto de entrenamiento. Cuando hayamos realizado una exploración suficiente, aplicaremos el PCA con los parámetros aprendidos sobre el entrenamiento al conjunto de *test*, para evitar *data snooping*.
+
+```{r}
+# Aplicamos PCA sin considerar la columna de salida
+#
+# Esto nos devuelve un objeto con el que vamos a realizar distintos analisis,
+# pero todavia no hemos modificado el dataframe para usar una transformacion
+# concreta
+df_train_pca_transf <- prcomp(df_train[, 1:8], scale = TRUE, center = TRUE)
+
+# Añadimos la columna de salida
+df_train_pca_transf$CLASS <- df_train$CLASS
+```
+
+Veamos el resumen de la técnica aplicada:
+
+```{r}
+summary(df_train_pca_transf)
+```
+
+Y para poder analizar esto de forma más intuitiva, mostramos los dos siguientes gráficos:
+
+```{r}
+# Este codigo esta copiado por completo del codigo de practicas visto en clase.
+# Hacemos solo unas ligeras modificaciones sobre el nombre del dataframe que
+# estamos usando
+
+# Proporción de varianza explicada
+varianza_explicada <- df_train_pca_transf$sdev^2 / sum(df_train_pca_transf$sdev^2)
+ggplot(data = data.frame(varianza_explicada, pc = 1:8),
+       aes(x = pc, y = varianza_explicada, fill=varianza_explicada )) +
+  geom_col(width = 0.3) +
+  scale_y_continuous(limits = c(0,0.6)) + theme_bw() +
+  labs(x = "Componente principal", y= " Proporción de varianza explicada")
+```
+
+```{r}
+# Este codigo esta copiado por completo del codigo de practicas visto en clase.
+# Hacemos solo unas ligeras modificaciones sobre el nombre del dataframe que
+# estamos usando
+# Proporción de varianza explicada acumulada
+
+varianza_acum<-cumsum(varianza_explicada)
+ggplot( data = data.frame(varianza_acum, pc = 1:8),
+        aes(x = pc, y = varianza_acum ,fill=varianza_acum )) +
+  geom_col(width = 0.5) +
+  scale_y_continuous(limits = c(0,1)) +
+  theme_bw() +
+  labs(x = "Componente principal",
+       y = "Proporción varianza explicada acumulada")
+```
+
+Con esto, podemos pensar que:
+
+1. Con una o dos componentes principales tenemos la mayoría de la varianza explicada
+2. Aunque en el gráfico de varianza acumulada podemos ver que las últimas 6 componentes principales explican prácticamente la misma varianza, que supone una acumulación significativa
+
+### Elección del número de componentes principales
+
+
+**Primer método**, **Regla de Abdi et al. (2010)**: Se promedia las varianzas explicadas por la componentes principales y se selecciona aquellas cuya proporción de varianza explicada supera la media ^[Esto lo tomo directamente del código visto en las práticas]:
+
+```{r}
+which(df_train_pca_transf$sdev^2 > mean(df_train_pca_transf$sdev^2))
+```
+
+Vemos que con este método, basta con tomar **las dos primeras componentes principales**.
+
+**Segundo método**, buscar una varianza explicada mínima. En este caso, buscamos explicar como mínimo el 80% de la varianza:
+
+```{r}
+threshold <- 0.8
+which(varianza_acum >= threshold)
+```
+
+En este caso, vemos que a partir de usar cuatro componentes principales, explicamos al menos el 80% de la varianza, y por tanto, deberíamos usar **las cuatro primeras componentes principales**.
+
+**Tercer método**: **método del codo** apoyándonos en el siguiente gráfico:
+
+```{r}
+# Usamos el dataframe original, no el objeto creado por la funcion que aplica PCA
+scree(df_train[, 1:8])
+```
+
+Vemos que para PCA, el número de componentes más alto para el que el gráfico queda por encima de uno es **dos componentes principales**.
+
+**Cuarto método**: **análisis paralelo** apoyándonos en el siguiente gráfico:
+
+```{r}
+
+# Para evitar que se quede computando indefinidamente, indicamos que queremos
+# usar solo un core del ordenador
+options(mc.cores = 1)
+
+# Con esto, ya podemos lanzar la funcion sin ningún problema
+fa.parallel(
+    # De nuevo, usamos el dataframe original
+    df_train[, 1:8],
+
+    # Para usar este metodo en PCA y no en analisis factorial
+    fa = "pc",
+    fm = "minres"
+)
+```
+
+De nuevo, esto nos indica que debemos usar **dos componentes principales**.
+
+**Conclusión**: aunque no expliquemos al menos el 80% de la variabilidad, 3 de los 4 métodos nos han indicado que debemos usar dos componentes principales
+
+### Aplicación de la técnica con el número de componentes escogido
+
+Ahora que hemos decidido usar dos componentes principales, aplicamos dicha técnica, como ya hemos comentado, sin caer en realizar *data snooping*:
+
+```{r}
+
+```
+
+
+## Reducción de la dimensionalidad con variables latentes
+
 
 ## Estudiar el supuesto de normalidad multivariante
 
