@@ -668,6 +668,21 @@ sapply(df_train[, 1:8], mean)
 sapply(df_train[, 1:8], sd)
 ```
 
+## Pares de variables
+
+Veamos ahora todos los pares de variables de entrada, y cómo clasifican la empleabilidad:
+
+```{r}
+pairs(
+    x = df_train[, 1:8],
+    col = c("firebrick", "green3")[dont_use_factor(df_train)$CLASS], pch = 19
+)
+```
+
+Este gráfico puede no ser útil, porque suponemos que podemos tener *overlapping* en muchos pares de variables. Esto es, entradas en nuestro conjunto de datos que, teniendo mismos valores para un par de variables concreto, tienen una empleabilidad distinta.
+
+Por tanto, no podemos usar este gráfico para extraer información relevante sobre los datos.
+
 ## Reducción de la dimensionalidad con componentes principales
 
 ### ¿Tiene sentido aplicar PCA?
@@ -1093,9 +1108,6 @@ Ocurre exactamente lo mismo, no asumimos la homogeneidad de la varianza.
 
 
 > Recordar que no tenemos normalidad multivariante, y por tanto, las conclusiones sacadas al aplicar estos *tests* no son del todo fiables. Pero a la hora de aplicar discriminante lineal o cuadrático, ya con la falta de normalidad multivariante podemos pensar que no van a actuar de forma eficiente, independientemente de que haya o no homogeneidad de la varianza
-
-
-<!-- TODO -- mostrar graficos de pares de variables. Se ven bien en la practica de clase de discriminante -->
 
 ----------------------------------------------------------------------------------------------------
 
