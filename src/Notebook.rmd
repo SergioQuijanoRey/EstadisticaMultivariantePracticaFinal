@@ -53,6 +53,7 @@ library(lares)
 library(psych)
 
 # Para normalizar datos
+# Tambien lo usamos para k-fold Cross Validation
 library(caret)
 
 # Para mostrar algunas graficas sobre PCA
@@ -123,7 +124,7 @@ head(df)
 Por comodidad, cambiamos el nombre de las columnas de datos:
 
 ```{r}
-colnames(df) <- c("APARIENCIA", "FORMAS HABLAR", "CONDICION FISICA", "AGILIDAD MENTAL", "CONFIANZA", "HAB. PRESENTAR IDEAS", "HABILIDADES COMUNICACION", "RENDIMIENTO ACADEMICO", "CLASS")
+colnames(df) <- c("APARIENCIA", "FORMAS HABLAR", "CONDICION FISICA", "AGILIDAD MENTAL", "CONFIANZA", "HAB. PRESENTAR_IDEAS", "HABILIDADES COMUNICACION", "RENDIMIENTO ACADEMICO", "CLASS")
 head(df)
 ```
 
@@ -273,7 +274,7 @@ boxplot(
     las = 2,
 
     # Doy nombres acortados para que se vea mejor
-    names = c("APARIENCIA", "FORM.HABLAR", "COND.FIS", "AGIL.MENTAL", "CONFIANZA", "PRESENTAR IDEAS", "COMUNICACION", "ACADEMICO", "CLASS")
+    names = c("APARIENCIA", "FORM_HABLAR", "COND_FIS", "AGIL_MENTAL", "CONFIANZA", "PRESENTAR_IDEAS", "COMUNICACION", "ACADEMICO", "CLASS")
 )
 ```
 
@@ -1111,11 +1112,119 @@ Ocurre exactamente lo mismo, no asumimos la homogeneidad de la varianza.
 
 ----------------------------------------------------------------------------------------------------
 
+# Exploración de hiperparámetros
+
+Tenemos algunos hiperparámetros que escoger. Entre ellos:
+
+1. Consideraremos tres modelos: discriminante lineal, discriminante cuadrático y *XGBOOST*^[Se puede consultar más inforación sobre este modelo en la [documentación oficial](https://xgboost.readthedocs.io/en/stable/index.html)]. Tenemos que elegir, al final, cuál de los tres modelos funciona mejor (aunque entrenaremos y validaremos los tres)
+2. Tenemos también tres conjuntos de datos: el original que hemos limpiado ligeramente, el que se obtiene de aplicar PCA y finalmente, el que se obtiene de aplicar Análisis Factorial. En cada uno de los tres modelos, tenemos que ver qué conjunto de datos funciona mejor
+3. *XGBOOST* tiene algunos hiperparámetros que podemos explorar, aunque en esta práctica no lo haremos
+
+Para encontrar estos hiperparámetros, podríamos realizar el entrenamiento y ver qué resultados son los mejores en test. Esto supone **data snooping**, porque estamos involucrando el conjunto de test en el aprendizaje (aunque el último paso se haga por parte de una persona, sigue siendo parte del entrenamiento de un modelo).
+
+Así que realizamos *k-Fold Cross Validation*. Partimos nuestro conjunto de datos en $k$ subconjuntos. Realizamos $k$ veces el siguiente proceso:
+
+1. Consideramos un conjunto nuevo de entrenamiento con $k-1$ subconjuntos
+2. Entrenamos sobre dicho conjunto de entrenamiento nuevo
+3. Usamos el conjunto restante, que no hemos usado, para computar una métrica a optimizar
+
+Una vez hecho eso, promediamos las $k$ métricas que estamos optimizando. Con esto, estamos usando todo el conjunto de datos de entrenamiento, tanto para entrenar como para validar, sin caer en *data snooping*.
+
+Así que haremos esto para elegir los hiperparámetros ya comentados previamente.
+
+Por ser un conjunto de datos pequeños, y al estar usando modelos rápidos de entrenar, tomamos un valor de $k$ relativamente elevado (cuanto mayor sea, mejor, pero supone que es más lento el proceso):
+
+```{r}
+number_of_folds <- 10
+```
+
+Además, siempre usaremos las siguientes formulas:
+
+```{r}
+form_original <- as.formula("CLASS ~ APARIENCIA + `FORMAS HABLAR` + `CONDICION FISICA` + `AGILIDAD MENTAL` + CONFIANZA + `HAB. PRESENTAR_IDEAS` + `HABILIDADES COMUNICACION` + `RENDIMIENTO ACADEMICO`")
+
+form_pca <- as.formula("CLASS ~ PC1 + PC2")
+
+# form_fa <- as.formula("CLASS ~ MR1 + MR2")
+```
+
+Y siempre el mismo tipo de control:
+
+```{r}
+control <- trainControl(method = "cv", number = number_of_folds)
+```
+
+## Discriminante Lineal
+
+**Datos originales**:
+
+```{r}
+cv_results <- train(form_original, data = df_train, trControl = control, method = "lda")
+cv_results$results$Accuracy
+```
+
+**Datos PCA**:
+
+```{r}
+# Usamos las clases del dataframe original porque son las mismas y,
+# principalmente, porque tienen el factor asociado que nos hace falta para este
+# metodo
+cv_results <- train(df_train_pca[, 1:2], df_train$CLASS, trControl = control, method = "lda")
+cv_results$results$Accuracy
+```
+
+**Datos FA**:
+
+```{r}
+# Usamos las clases del dataframe original porque son las mismas y,
+# principalmente, porque tienen el factor asociado que nos hace falta para este
+# metodo
+cv_results <- train(df_train_fa[, 1:2], df_train$CLASS, trControl = control, method = "lda")
+cv_results$results$Accuracy
+```
+
+## Discriminante cuadrático
+
+**Datos originales**:
+
+```{r}
+cv_results <- train(form_original, data = df_train, trControl = control, method = "qda")
+cv_results$results$Accuracy
+```
+
+**Datos PCA**:
+
+```{r}
+# Usamos las clases del dataframe original porque son las mismas y,
+# principalmente, porque tienen el factor asociado que nos hace falta para este
+# metodo
+cv_results <- train(df_train_pca[, 1:2], df_train$CLASS, trControl = control, method = "qda")
+cv_results$results$Accuracy
+```
+
+**Datos FA**:
+
+```{r}
+# Usamos las clases del dataframe original porque son las mismas y,
+# principalmente, porque tienen el factor asociado que nos hace falta para este
+# metodo
+cv_results <- train(df_train_fa[, 1:2], df_train$CLASS, trControl = control, method = "qda")
+cv_results$results$Accuracy
+```
+
+## XGBOOST
+
+----------------------------------------------------------------------------------------------------
+
 # Clasificación
 
 ## Clasificador con discriminante lineal
 
+Ya hemos realizado un estudio sobre los supuestos que se tienen que verificar para que este clasificador funcione correctamente. Los dos supuestos principales (normalidad multivariante y homogeneidad de la varianza) no se sostienen, y por tanto, podemos espera que este modelo no funcione correctamente. Además, sabemos que este clasificador es más sensible frente a la falla de los supuestos que el discriminante cuadrático.
+
 ## Clasificador con discriminante cuadrático
+
+Ya hemos realizado un estudio sobre los supuestos que se tienen que verificar para que este clasificador funcione correctamente. Los dos supuestos principales (normalidad multivariante y homogeneidad de la varianza) no se sostienen, y por tanto, podemos espera que este modelo no funcione correctamente. Además, sabemos que este clasificador es más robusto frente a la falla de los supuestos que el discriminante cuadrático. Y por tanto es esperable que funcione mejor.
 
 ----------------------------------------------------------------------------------------------------
 
