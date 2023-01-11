@@ -955,7 +955,7 @@ df_train_fa_varimax_one <- fa(
 fa.diagram(df_train_fa_varimax_one)
 ```
 
-Es destacable que el rendimiento académico parece no participar en la variable latente, que combina el resto de variables. Por esto, pensamos que es mejor usar el modelo con dos variables latentes, porque tendremos más información a la hora de clasificar, y con dos variables no corremos el riesgo de caer en un *overfitting* por culpa de considerar variables latentes extras. Así que transformamos los dos conjuntos de datos, y de nuevo, con cuidado de no caer en *data snooping*:
+Es destacable que **el rendimiento académico parece no participar en la variable latente**, que combina el resto de variables. Por esto, pensamos que es mejor usar el modelo con dos variables latentes, porque tendremos más información a la hora de clasificar, y con dos variables no corremos el riesgo de caer en un *overfitting* por culpa de considerar variables latentes extras. Así que transformamos los dos conjuntos de datos, y de nuevo, con cuidado de no caer en *data snooping*. Empezamos transformando el conjunto de entrenamiento, que es más sencillo:
 
 ```{r}
 # Tomamos los datos de las dos variables latentes
@@ -971,15 +971,28 @@ colnames(df_train_fa) <- c("MR1", "MR2", "CLASS")
 head(df_train_fa)
 ```
 
-Aplicamos la misma transformación (con parámetros aprendidos sobre el entrenamiento) al conjunto de test:
-
-<!-- TODO -- BUG -- esto esta mal, porque no estoy aplicando lo mismo -->
+Aplicamos la misma transformación (con parámetros aprendidos sobre el entrenamiento) al conjunto de test. Para ello, tenemos que usar la función `predict.psych`. Se puede consultar [la documentación oficial de dicha función](https://www.rdocumentation.org/packages/psych/versions/2.2.5/topics/predict.psych):
 
 ```{r}
-# TODO -- BUG -- esto esta mal
-# df_test_fa <- df_train_fa_varimax$scores
-# df_test_fa <- cbind(df_test_fa, df_test$CLASS)
-# colnames(df_test_fa) <- c("MR1", "MR2", "CLASS")
+# Aplicamos la transformacion aprendida sobre el conjunto de entrenamiento
+# Para ello, tenemos que usar el objeto que `fa` genera, el conjunto al que
+# aplicamos la transformacion, y el conjunto de datos sobre el que se ha
+# aprendido la transformacion
+df_test_fa <- predict.psych(
+    # Objeto generado por `fa` sobre el conjunto de entrenamiento
+    df_train_fa_varimax,
+
+    # Datos a los que queremos aplicar la transformacion
+    df_test[, 1:8],
+
+    # Datos sobre los que se ha aprendido la transformacion
+    df_train[1:8]
+)
+
+# Ahora, añadimos la variable de salida que no participa en el analisis factorial
+# Añadimos tambien los nombres de las columnas
+df_test_fa <- cbind(df_test_fa, df_test$CLASS)
+colnames(df_test_fa) <- c("MR1", "MR2", "CLASS")
 ```
 
 ## Estudiar el supuesto de normalidad multivariante
