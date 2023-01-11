@@ -38,6 +38,12 @@ let
         # Para mostrar algunas visualizaciones sobre PCA
         factoextra
 
+        # Para analizar el supuesto de normalidad multivariante
+        MVN
+
+        # Para analizar la homogeneidad de la varianza
+        biotools
+
         # Para tener acceso al LSP de R
         languageserver
         languageserversetup

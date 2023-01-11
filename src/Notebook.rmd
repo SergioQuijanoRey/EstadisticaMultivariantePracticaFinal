@@ -56,7 +56,13 @@ library(psych)
 library(caret)
 
 # Para mostrar algunas graficas sobre PCA
-library("factoextra")
+library(factoextra)
+
+# Para hacer tests de normalidad
+library(MVN)
+
+# Para los tests de homogeneidad de la varianza
+library(biotools)
 ```
 
 Estos paquetes se pueden instalar con la orden `install.packages("<nombre_paquete>")`. Sin embargo, hemos definido todos los paquetes necesarios, de forma declarativa, en el archivo `shell.nix` que se puede encontrar en [este archivo](https://github.com/SergioQuijanoRey/EstadisticaMultivariantePracticaFinal/blob/main/shell.nix). Para usar este entorno de paquetes se puede consultar la [documentación oficial de Nix](https://nixos.org/)
@@ -997,6 +1003,99 @@ colnames(df_test_fa) <- c("MR1", "MR2", "CLASS")
 
 ## Estudiar el supuesto de normalidad multivariante
 
+La clasificación usando discriminante lineal y cuadrático necesitan del supuesto de normalidad multivariante, entre otros. Así que en este apartado analizaremos dicho supuesto.
+
+En [Estudio del supuesto de normalidad] ya hemos visto que **la normalidad univariante falla para todas las variables** de nuestro conjunto de datos. Así que estamos prácticamente seguros de que la normalidad multivariante fallará para nuestro conjunto de datos. Aún sabiendo que este supuesto va a fallar, lo comprobamos. Además, lo haremos para nuestros **tres conjuntos de datos** con los que trabajamos hasta ahora:
+
+1. Conjunto de datos original, con cierta limpieza previa (borrado de datos faltantes, borrado de *outliers* y escalado de las variables)
+2. Conjunto de datos original al que aplicamos PCA
+3. Conjunto de datos original al que aplicamos Análisis Factorial
+
+Esto lo hacemos porque realizaremos clasificación con los tres modelos, usando *k-Fold Cross Validation* para ver con qué conjunto de datos obtenemos mejores resultados, sin caer en *data snooping*.
+
+### Contraste de hipótesis
+
+H0: Las variables siguen una distribución normal multivariante
+
+Empezamos con el **test de Mardia**:
+
+```{r}
+mardia_test <- mvn(data = df_train[, 1:8], mvnTest = "mardia", multivariatePlot = "qq")
+mardia_test$multivariateNormality
+```
+
+Ahora, hacemos el **test de Henze-Zirkler**
+
+```{r}
+hz_test <- mvn(data = df_train[, 1:8], mvnTest = "hz")
+hz_test$multivariateNormality
+```
+
+Podemos ver que ambos *tests* fallan, y por tanto, **contundentemente confirmamos que no tenemos normalidad multivariante**. Por tanto, esperamos que el rendimiento del discriminante cuadrático sea mejor que el del discriminante lineal, que es más sensible a la falta de esta normalidad multivariante.
+
+Esto con el conjunto de datos original. Veamos ahora el caso de los datos transformados usando *PCA*. Como los datos originales no tienen normalidad multivariante, esperamos que los datos transformados sigan sin tener normalidad multivariante:
+
+```{r}
+# Aplicamos los dos tests
+mardia_test <- mvn(data = df_train_pca[, 1:2], mvnTest = "mardia", multivariatePlot = "qq")
+hz_test <- mvn(data = df_train_pca[, 1:2], mvnTest = "hz")
+
+# Mostramos los resultados
+mardia_test$multivariateNormality
+hz_test$multivariateNormality
+```
+
+Ambos *tests* nos dicen que **no tenemos normalidad multivariante para los datos transformados con PCA**. Veamos ahora lo mismo para los datos transformados con el análisis factorial (tampoco esperamos que haya normalidad multivariante):
+
+```{r}
+# Aplicamos los dos tests
+mardia_test <- mvn(data = df_train_fa[, 1:2], mvnTest = "mardia", multivariatePlot = "qq")
+hz_test <- mvn(data = df_train_fa[, 1:2], mvnTest = "hz")
+
+# Mostramos los resultados
+mardia_test$multivariateNormality
+hz_test$multivariateNormality
+```
+
+Y como era de esperar, **no tenemos normalidad multivariante para los datos transformados con Análisis Factorial**.
+
+Por tanto, en **ninguno de los tres _datasets_ con los que trabajamos tenemos normalidad multivariante**, como era de esperar.
+
+## Análisis de la homogeneidad de la varianza
+
+Otra hipótesis necesaria para aplicar discriminante lineal y cuadrática es la homogeneidad de la varianza. Como tenemos varios predictores, usaremos la función `boxM` como una extensión del **test de Bartlett** para un solo predictor.
+
+Este test es **muy sensible** al supuesto de normalidad multivariante, que ya sabemos que falla. Así que los resultados pueden ser del no todo fiables. Pero como ya sabemos que no tenemos normalidad multivariante, independientemente de que esta hipótesis de homogeneidad de la varianza se mantenga o no, la clasificación con discriminante (lineal y cuadrático) no funcionarán de forma óptima.
+
+De nuevo, realizaremos este test para los **tres conjuntos de datos** con los que estamos trabajando. Empezando con el conjunto de datos original:
+
+```{r}
+boxM(data = df_train[, 1:8], grouping = dont_use_factor(df_train)[, 9])
+```
+
+Como *p-value* es $\approx 0 << 0.001$, rechazamos la hipótesis nula, y por tanto **no asumimos la homogeneidad de varianzas**.
+
+Ahora, para el conjunto de datos transformado usando PCA:
+
+```{r}
+boxM(data = df_train_pca[, 1:2], grouping = df_train_pca[, 3])
+```
+
+De nuevo, como *p-value* es $\approx 0 << 0.001$, rechazamos la hipótesis nula, y por tanto no asumimos la homogeneidad de varianzas.
+
+Y para finalizar, el conjunto de datos transformado usando Análisis Factorial:
+
+```{r}
+boxM(data = df_train_fa[, 1:2], grouping = df_train_fa[, 3])
+```
+
+Ocurre exactamente lo mismo, no asumimos la homogeneidad de la varianza.
+
+
+> Recordar que no tenemos normalidad multivariante, y por tanto, las conclusiones sacadas al aplicar estos *tests* no son del todo fiables. Pero a la hora de aplicar discriminante lineal o cuadrático, ya con la falta de normalidad multivariante podemos pensar que no van a actuar de forma eficiente, independientemente de que haya o no homogeneidad de la varianza
+
+
+<!-- TODO -- mostrar graficos de pares de variables. Se ven bien en la practica de clase de discriminante -->
 
 ----------------------------------------------------------------------------------------------------
 
