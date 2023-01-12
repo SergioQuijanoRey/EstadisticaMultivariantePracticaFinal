@@ -1222,8 +1222,8 @@ cv_results$results$Accuracy
 En todos los casos, usamos los **mismos parámetros del modelo**, que no vamos a buscar optimizar con *k-Fold Cross Validation*:
 
 ```{r}
-number_rounds <- 3
-param <- list(max.depth = 2, eta = 0.3, nthread = 2, nrounds = number_rounds, objective = "binary:logistic")
+number_rounds <- 100
+param <- list(max.depth = 10, eta = 0.3, nthread = 2, nrounds = number_rounds, objective = "binary:logistic")
 ```
 
 **Datos originales**:
@@ -1251,16 +1251,11 @@ results <- xgb.cv(
     showsd = FALSE
 )
 
-# Mostramos la media de los dos rounds de cross validation
-mean(results$evaluation_log$test_error_mean)
-```
-
-```
-# TODO -- borrar esta celda
-# Mejor accuracy: 0.4248084
-# Mejores parametros:
-#   number_rounds <- 3
-#   param <- list(max.depth = 2, eta = 0.3, nthread = 2, nrounds = number_rounds, objective = "binary:logistic")
+# Mostramos la media de los rounds de cross validation
+# Este metodo devuelve el error, asi que tenemos que calcular el accuracy
+error <- mean(results$evaluation_log$test_error_mean)
+accuracy <- 1 - error
+accuracy
 ```
 
 **Datos PCA**:
@@ -1288,8 +1283,11 @@ results <- xgb.cv(
     showsd = FALSE
 )
 
-# Mostramos la media de los dos rounds de cross validation
-mean(results$evaluation_log$test_error_mean)
+# Mostramos la media de los rounds de cross validation
+# Este metodo devuelve el error, asi que tenemos que calcular el accuracy
+error <- mean(results$evaluation_log$test_error_mean)
+accuracy <- 1 - error
+accuracy
 ```
 
 **Datos AF**:
@@ -1317,8 +1315,11 @@ results <- xgb.cv(
     showsd = FALSE
 )
 
-# Mostramos la media de los dos rounds de cross validation
-mean(results$evaluation_log$test_error_mean)
+# Mostramos la media de los rounds de cross validation
+# Este metodo devuelve el error, asi que tenemos que calcular el accuracy
+error <- mean(results$evaluation_log$test_error_mean)
+accuracy <- 1 - error
+accuracy
 ```
 
 ## Tabla resumiendo los resultados obtenidos
@@ -1331,25 +1332,123 @@ mean(results$evaluation_log$test_error_mean)
 | Discriminante Cuadrático | Original | 0.6891568 |
 | Discriminante Cuadrático | PCA      | 0.5615132 |
 | Discriminante Cuadrático | FA       | 0.587775 |
-| Discriminante Cuadrático | Original | 0 |
-| Discriminante Cuadrático | PCA      | 0 |
-| Discriminante Cuadrático | FA       | 0 |
+| XGBOOST | Original | 0.9014924 |
+| **XGBOOST** | **PCA**      | **0.9046639** |
+| XGBOOST | FA       | 0.9036134 |
+
+## Conclusiones
+
+1. Como comentaremos más adelante, en vista de que los supuestos fallan para los modelos de discriminante lineal y cuadrático, era de esperar que el discriminante cuadrático funcionase mejor (porque es más robusto ante la falta de los supuestos)
+2. Un modelo basado en *boosting* obtiene los mejores resultados. Era de esperar porque es uno de los modelos más potentes, que siempre se suelen considerar a la hora de trabajar con datos tabulares.
+3. Además, *XGBOOST* es el único modelo en el que la reducción de la dimensionalidad mejora los resultados. Además, se mejoran tanto usando *PCA* como usando *FA*
 
 ----------------------------------------------------------------------------------------------------
 
 # Clasificación
 
+> Aunque tenemos tres conjuntos de datos (original, PCA y FA), solo usaremos uno por cada modelo. Este conjunto de datos se escogerá como el que mejor resultados hemos visto en [Tabla resumiendo los resultados obtenidos]
+
 ## Clasificador con discriminante lineal
 
-Ya hemos realizado un estudio sobre los supuestos que se tienen que verificar para que este clasificador funcione correctamente. Los dos supuestos principales (normalidad multivariante y homogeneidad de la varianza) no se sostienen, y por tanto, podemos espera que este modelo no funcione correctamente. Además, sabemos que este clasificador es más sensible frente a la falla de los supuestos que el discriminante cuadrático.
+Ya hemos realizado un estudio sobre los supuestos que se tienen que verificar para que este clasificador funcione correctamente. Los dos supuestos principales (normalidad multivariante y homogeneidad de la varianza) no se sostienen, y por tanto, podemos espera que este modelo no funcione correctamente. Además, sabemos que este clasificador es más sensible frente a la falla de los supuestos que el discriminante cuadrático. Esto lo hemos podido comprobar en [Tabla resumiendo los resultados obtenidos]
+
+En este caso, el mejor modelo obtenido es sobre el conjunto de datos original, sobre el que hemos realizado un procesado básico de los datos:
+
+```{r}
+modelo_lda <- lda(formula = form_original, data = df_train)
+modelo_lda
+```
+
+Ahora, podemos usar los coeficientes del modelo para intuir cuál es la importancia de las variables a la hora de predecir la empleabilidad:
+
+```{r}
+# TODO -- implementar
+```
 
 ## Clasificador con discriminante cuadrático
 
-Ya hemos realizado un estudio sobre los supuestos que se tienen que verificar para que este clasificador funcione correctamente. Los dos supuestos principales (normalidad multivariante y homogeneidad de la varianza) no se sostienen, y por tanto, podemos espera que este modelo no funcione correctamente. Además, sabemos que este clasificador es más robusto frente a la falla de los supuestos que el discriminante cuadrático. Y por tanto es esperable que funcione mejor.
+Ya hemos realizado un estudio sobre los supuestos que se tienen que verificar para que este clasificador funcione correctamente. Los dos supuestos principales (normalidad multivariante y homogeneidad de la varianza) no se sostienen, y por tanto, podemos espera que este modelo no funcione correctamente. Además, sabemos que este clasificador es más robusto frente a la falla de los supuestos que el discriminante cuadrático. Y por tanto es esperable que funcione mejor. En [Tabla resumiendo los resultados obtenidos] ya hemos visto que esto es así
+
+En este caso, el mejor modelo obtenido es sobre el conjunto de datos original, sobre el que hemos realizado un procesado básico de los datos:
+
+```{r}
+modelo_qda <- qda(formula = form_original, data = df_train)
+modelo_qda
+```
+
+## Clasificador
+
+Como hemos visto en [Tabla resumiendo los resultados obtenidos], este es el mejor modelo. El *dataset* sobre el que mejores resultados se obtiene es al que aplicamos *PCA*. Procedemos a entrenar el modelo sobre todo el conjunto de datos:
+
+```{r}
+# Convertimos los datos al formato que necesita xgboost
+# Usamos una formula para indicar que no se use la variable objetivo
+xgboost_train <- model.matrix(CLASS~.-1, data = as.data.frame(df_train_pca))
+
+# No generamos de nuevo las etiquetas, puesto que son las mismas que en
+# validacion cruzada anterior
+
+# Ahora juntamos las variables de entrada, con las etiquetas formateadas
+xgboost_train <- xgb.DMatrix(xgboost_train, label = zero_one_labels)
+
+# Entrenamos el modelo
+xgb_model <- xgb.train(
+    data = xgboost_train,
+    max_depth = 10,
+    eta = 0.3,
+    nrounds = 100,
+    nthread = 2,
+    objective = "binary:logistic",
+    eval_metric = "error"
+)
+xgb_model
+```
+
+Como hacemos con los otros modelos, podemos usar el modelo entrenado para saber cuál es la importancia de las variables de entrada a la hora de realizar las predicciones (esto ya lo trae pre-programado el módulo de *XGBOOST*):
+
+```{r}
+imp_matrix <- xgb.importance(feature_names = colnames(xgboost_train), model = xgb_model)
+print(xgb.plot.importance(importance_matrix = imp_matrix))
+```
+
+Como sospechábamos, la componente principal relacionada con el rendimiento académico es menos relevante que la que combina el resto de variables. Podemos hacer lo mismo con el el *dataframe* original, aunque no suponga el mejor modelo:
+
+```{r}
+# Convertimos los datos al formato que necesita xgboost
+# Usamos una formula para indicar que no se use la variable objetivo
+xgboost_train <- model.matrix(CLASS~.-1, data = as.data.frame(df_train))
+
+# No generamos de nuevo las etiquetas, puesto que son las mismas que en
+# validacion cruzada anterior
+
+# Ahora juntamos las variables de entrada, con las etiquetas formateadas
+xgboost_train <- xgb.DMatrix(xgboost_train, label = zero_one_labels)
+
+# Entrenamos el modelo
+xgb_model <- xgb.train(
+    data = xgboost_train,
+    max_depth = 10,
+    eta = 0.3,
+    nrounds = 100,
+    nthread = 2,
+    objective = "binary:logistic",
+    eval_metric = "error"
+)
+
+# Mostramos la importancia de las variables
+imp_matrix <- xgb.importance(feature_names = colnames(xgboost_train), model = xgb_model)
+print(xgb.plot.importance(importance_matrix = imp_matrix))
+```
+
+# TODO -- comentar estos resultados -- apariencia la segunda variable mas importante
 
 ----------------------------------------------------------------------------------------------------
 
 # Validación
+
+> En parte, ya hemos validado los modelos con *k-fold Cross Validation*. Sin embargo, validamos ahora los modelos entrenados sobre todo el conjunto de datos (y no sobre 9 *folds*), usando el valor de *accuracy* y viendo la matriz de confusión. Aunque sabemos que el modelo que mejor funciona es *XGBOOST*, realizamos la validación sobre los tres modelos
+
+> **IMPORTANTE**: ya hemos elegido, con *k-fold Cross Validation* es el mejor modelo. Usar los resultados de la validación sobre *test* para escoger cuál es el mejor modelo implicaría que usamos estas métricas en el aprendizaje, cayendo en *data snooping*. Viendo los resultados de los tres modelos solo nos sirve para, o bien confirmar lo que hemos afirmado previamente, o ver que no es correcto y que por tanto algo en nuestra metodología ha fallado
 
 ## Validación con matriz de confusión
 
