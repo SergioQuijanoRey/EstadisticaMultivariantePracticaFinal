@@ -44,6 +44,9 @@ let
         # Para analizar la homogeneidad de la varianza
         biotools
 
+        # Para usar el modelo xgboost
+        xgboost
+
         # Para tener acceso al LSP de R
         languageserver
         languageserversetup

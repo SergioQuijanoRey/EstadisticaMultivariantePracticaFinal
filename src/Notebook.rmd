@@ -64,6 +64,9 @@ library(MVN)
 
 # Para los tests de homogeneidad de la varianza
 library(biotools)
+
+# Para usar el modelo xgboost
+library(xgboost)
 ```
 
 Estos paquetes se pueden instalar con la orden `install.packages("<nombre_paquete>")`. Sin embargo, hemos definido todos los paquetes necesarios, de forma declarativa, en el archivo `shell.nix` que se puede encontrar en [este archivo](https://github.com/SergioQuijanoRey/EstadisticaMultivariantePracticaFinal/blob/main/shell.nix). Para usar este entorno de paquetes se puede consultar la [documentación oficial de Nix](https://nixos.org/)
@@ -1213,6 +1216,124 @@ cv_results$results$Accuracy
 ```
 
 ## XGBOOST
+
+> Para usar este modelo tenemos que generar *datasets* con un tipo concreto para este modelo, que es lo que hacemos en cada caso, para cada uno de los tres tipos de conjunto de datos que estamos manejando
+
+En todos los casos, usamos los **mismos parámetros del modelo**, que no vamos a buscar optimizar con *k-Fold Cross Validation*:
+
+```{r}
+number_rounds <- 3
+param <- list(max.depth = 2, eta = 0.3, nthread = 2, nrounds = number_rounds, objective = "binary:logistic")
+```
+
+**Datos originales**:
+
+```{r}
+# Convertimos los datos al formato que necesita xgboost
+# Usamos una formula para indicar que no se use la variable objetivo
+xgboost_train <- model.matrix(CLASS~.-1, data = df_train)
+
+# La label tiene que ser valores 0, 1 para xgboost
+zero_one_labels <- dont_use_factor(df_train)$CLASS - 1
+
+# Ahora juntamos las variables de entrada, con las etiquetas formateadas
+xgboost_train <- xgb.DMatrix(xgboost_train, label = zero_one_labels)
+
+# Ejecutamos cross validation
+results <- xgb.cv(
+    param,
+    xgboost_train,
+    nrounds = number_rounds,
+    nfold = number_of_folds,
+    metrics = "error",
+
+    # No nos interesan ahora ver las desviaciones
+    showsd = FALSE
+)
+
+# Mostramos la media de los dos rounds de cross validation
+mean(results$evaluation_log$test_error_mean)
+```
+
+```
+# TODO -- borrar esta celda
+# Mejor accuracy: 0.4248084
+# Mejores parametros:
+#   number_rounds <- 3
+#   param <- list(max.depth = 2, eta = 0.3, nthread = 2, nrounds = number_rounds, objective = "binary:logistic")
+```
+
+**Datos PCA**:
+
+```{r}
+# Convertimos los datos al formato que necesita xgboost
+# Usamos una formula para indicar que no se use la variable objetivo
+xgboost_train <- model.matrix(CLASS~.-1, data = as.data.frame(df_train_pca))
+
+# No generamos de nuevo las etiquetas, puesto que son las mismas que en el caso
+# anterior
+
+# Ahora juntamos las variables de entrada, con las etiquetas formateadas
+xgboost_train <- xgb.DMatrix(xgboost_train, label = zero_one_labels)
+
+# Ejecutamos cross validation
+results <- xgb.cv(
+    param,
+    xgboost_train,
+    nrounds = number_rounds,
+    nfold = number_of_folds,
+    metrics = "error",
+
+    # No nos interesan ahora ver las desviaciones
+    showsd = FALSE
+)
+
+# Mostramos la media de los dos rounds de cross validation
+mean(results$evaluation_log$test_error_mean)
+```
+
+**Datos AF**:
+
+```{r}
+# Convertimos los datos al formato que necesita xgboost
+# Usamos una formula para indicar que no se use la variable objetivo
+xgboost_train <- model.matrix(CLASS~.-1, data = as.data.frame(df_train_fa))
+
+# No generamos de nuevo las etiquetas, puesto que son las mismas que en el caso
+# anterior
+
+# Ahora juntamos las variables de entrada, con las etiquetas formateadas
+xgboost_train <- xgb.DMatrix(xgboost_train, label = zero_one_labels)
+
+# Ejecutamos cross validation
+results <- xgb.cv(
+    param,
+    xgboost_train,
+    nrounds = number_rounds,
+    nfold = number_of_folds,
+    metrics = "error",
+
+    # No nos interesan ahora ver las desviaciones
+    showsd = FALSE
+)
+
+# Mostramos la media de los dos rounds de cross validation
+mean(results$evaluation_log$test_error_mean)
+```
+
+## Tabla resumiendo los resultados obtenidos
+
+| Modelo | Dataset | Accuracy |
+| :--- | :--- | :--- |
+| Discriminante Lineal     | Original | 0.5915605 |
+| Discriminante Lineal     | PCA      | 0.5334985 |
+| Discriminante Lineal     | FA       | 0.5284333 |
+| Discriminante Cuadrático | Original | 0.6891568 |
+| Discriminante Cuadrático | PCA      | 0.5615132 |
+| Discriminante Cuadrático | FA       | 0.587775 |
+| Discriminante Cuadrático | Original | 0 |
+| Discriminante Cuadrático | PCA      | 0 |
+| Discriminante Cuadrático | FA       | 0 |
 
 ----------------------------------------------------------------------------------------------------
 
