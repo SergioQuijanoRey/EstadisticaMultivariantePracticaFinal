@@ -33,6 +33,8 @@ let
         lares
 
         # Para estandarizar training / test sin hacer data snooping
+        # Tambien para la matriz de confusion
+        # Tambien lo usamos para k-fold Cross Validation
         caret
 
         # Para mostrar algunas visualizaciones sobre PCA

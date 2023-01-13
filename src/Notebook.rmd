@@ -54,6 +54,7 @@ library(psych)
 
 # Para normalizar datos
 # Tambien lo usamos para k-fold Cross Validation
+# Tambien para la matriz de confusion
 library(caret)
 
 # Para mostrar algunas graficas sobre PCA
@@ -1492,10 +1493,11 @@ Empezamos viendo el **accuracy** del modelo, tanto en entrenamiento como en *tes
 
 ```{r}
 # Calcula el accuracy de un modelo sobre un conjunto de datos
+# Tambien calcula la matriz de confusion
 # `input_vars` data.frame con las variables de entrada
 # `labels` vector con las etiquetas reales
-# `model` modelo del que calculamos el accuracy
-get_accuracy <- function(input_vars, labels, model) {
+# `model` modelo del que calculamos el accuracy y la matriz de confusion
+get_eval_metrics <- function(input_vars, labels, model) {
     # Realizamos las predicciones usando el modelo y variables de entrada
     predictions <- predict(model, input_vars)
 
@@ -1505,19 +1507,37 @@ get_accuracy <- function(input_vars, labels, model) {
     # Lo usamos para computar el accuracy
     accuracy <- sum(correct_predictions) / length(correct_predictions)
 
-    return(accuracy)
+    # Veamos la matriz de confusion
+    conf_matrix <- confusionMatrix(data = predictions$class, reference = labels)
+
+    # Devolvemos las dos metrics en una lista nombrada
+    return(list(accuracy = accuracy, conf_matrix = conf_matrix))
 }
 ```
 
-Calculamos ahora los valores:
+Calculamos ahora las métricas:
 
 ```{r}
-# Calculamos los accuracy
-train_accuracy <- get_accuracy(df_train[, 1:8], df_train$CLASS, modelo_lda)
-test_accuracy <- get_accuracy(df_test[, 1:8], df_test$CLASS, modelo_lda)
+# Calculamos las metricas
+train_metrics <- get_eval_metrics(df_train[, 1:8], df_train$CLASS, modelo_lda)
+test_metrics <- get_eval_metrics(df_test[, 1:8], df_test$CLASS, modelo_lda)
+```
 
-# Mostramos los valores
-message("Train accuracy: ", train_accuracy, "  Test accuracy: ", test_accuracy)
+Mostramos el accuracy:
+
+```{r}
+message("Train accuracy: ", train_metrics$accuracy, "  Test accuracy: ", test_metrics$accuracy)
+```
+
+Mostramos las matrices de confusión:
+
+```{r}
+message("Entrenamiento")
+train_metrics$conf_matrix
+
+
+message("Test")
+test_metrics$conf_matrix
 ```
 
 ## Discriminante cuadrático
@@ -1525,12 +1545,26 @@ message("Train accuracy: ", train_accuracy, "  Test accuracy: ", test_accuracy)
 Usamos el código anterior para hacer lo mismo con este modelo:
 
 ```{r}
-# Calculamos los accuracy
-train_accuracy <- get_accuracy(df_train[, 1:8], df_train$CLASS, modelo_qda)
-test_accuracy <- get_accuracy(df_test[, 1:8], df_test$CLASS, modelo_qda)
+# Calculamos las metricas
+train_metrics <- get_eval_metrics(df_train[, 1:8], df_train$CLASS, modelo_qda)
+test_metrics <- get_eval_metrics(df_test[, 1:8], df_test$CLASS, modelo_qda)
+```
 
-# Mostramos los valores
-message("Train accuracy: ", train_accuracy, "  Test accuracy: ", test_accuracy)
+Mostramos el accuracy:
+
+```{r}
+message("Train accuracy: ", train_metrics$accuracy, "  Test accuracy: ", test_metrics$accuracy)
+```
+
+Mostramos las matrices de confusión:
+
+```{r}
+message("Entrenamiento")
+train_metrics$conf_matrix
+
+
+message("Test")
+test_metrics$conf_matrix
 ```
 
 ## XGBOOST
@@ -1559,6 +1593,22 @@ train_accuracy <- sum(correct_predictions) / length(correct_predictions)
 message("Train accuracy: ", train_accuracy, "  Test accuracy: ", test_accuracy)
 ```
 
+Y ahora, podemos calcular la matriz de confusión:
+
+```{r}
+# Calculamos las matrices
+# Aplicamos factores a las etiquetas 0, 1 porque asi lo requiere la funcion
+conf_matrix_train <- confusionMatrix(data = factor(train_predictions), reference = factor(zero_one_labels))
+conf_matrix_test <- confusionMatrix(data = factor(test_predictions), reference = factor(zero_one_labels_test))
+
+# Mostramos las matrices
+message("Entrenamiento")
+conf_matrix_train
+
+message("Test")
+conf_matrix_test
+```
+
 ## Resumen de los resultados obtenidos
 
 Empezamos viendo los valores de *accuracy*:
@@ -1575,6 +1625,8 @@ Con esto, podemos ver que:
 2. Además, la métrica obtenida en *test* no está demasiado alejada de la estimada usando *k-fold Cross Validation* (menos de un $0.01$ de diferencia)
 3. A pesar de las fallas de supuestos, el discriminante cuadrático ha obtenido unos resultados decentes, con un *accuracy* casi del 70%
 
+# TODO -- comentar los resultados de las matrices de confusión
+# TODO -- ponerlas aqui, solo las de test, y comentar en base a ello
 
 
 
