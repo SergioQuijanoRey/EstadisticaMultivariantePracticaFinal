@@ -1362,7 +1362,14 @@ modelo_lda
 Ahora, podemos usar los coeficientes del modelo para intuir cuál es la importancia de las variables a la hora de predecir la empleabilidad:
 
 ```{r}
-# TODO -- implementar
+# Generamos un dataframe con los datos que necesitamos para el grafico
+values <- as.list(modelo_lda$scaling)
+names <- colnames(df_train[, 1:8])
+plot_data <- data.frame(unlist(values), unlist(names))
+colnames(plot_data) <- c("Coeficientes", "Variables")
+
+# Usamos esto para hacer un barplot
+barplot(plot_data$Coeficientes)
 ```
 
 ## Clasificador con discriminante cuadrático
@@ -1440,7 +1447,13 @@ imp_matrix <- xgb.importance(feature_names = colnames(xgboost_train), model = xg
 print(xgb.plot.importance(importance_matrix = imp_matrix))
 ```
 
-# TODO -- comentar estos resultados -- apariencia la segunda variable mas importante
+Con esto, podemos sacar las siguientes conclusiones:
+
+1. Las dos variables más importantes son la agilidad mental y la apariencia. Nos sorprende que la segunda variable más importante a la hora de determinar la empleabilidad, *según este modelo*, sea la apariencia
+2. En tercer lugar tenemos el rendimiento académico. En parte sorprende, porque como hemos ido comentando a lo largo de este cuaderno, parecía tener muy poca relevancia a la hora de determinar la empleabilidad. Puede ser que, como estamos trabajando con árboles de decisión (aunque tengamos *boosting* agregando múltiples árboles), cuando la agilidad mental y apariencia no sea suficiente para determinar la empleabilidad, el rendimiento académico sea una buena métrica para desempatar
+3. Podemos pensar que es un modelo más o menos justo:
+    - La agilidad mental y la apariencia, aunque puedan haber opiniones, son algo meritocráticas (un empleado con agilidad mental es preferible, la apariencia en parte depende del interés del candidato por el puesto de trabajo^[De nuevo, esto está completamente abierto a la opinión del lector])
+    - La condición físicas y formas de hablar aparecen como las dos variables menos relevantes, y podríamos pensar que son las dos variables menos meritocráticas
 
 ----------------------------------------------------------------------------------------------------
 
