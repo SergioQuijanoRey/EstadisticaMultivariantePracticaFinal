@@ -420,7 +420,7 @@ Veamos esto gráficamente:
 barplot(prop.table(table(df_train$CLASS)),
         col = rainbow(2),
         ylim = c(0, 0.7),
-        main = "Distribución de la empleabilidad en los datos de entrenamient")
+        main = "Distribución de la empleabilidad en los datos de entrenamiento")
 ```
 
 Hay cierto desbalanceo hacia la no empleabilidad, aproximadamente un 40-60%. De normal, este desbalanceo no es demasiado grave. Además, considerando el desbalanceo esperable dado el contexto en el que estamos (un porcentaje mayoritario no debería ser aceptado para un trabajo), consideramos que no necesitamos aplicar alguna técnica para tratar este desbalanceo. Aunque no es algo demasiado complicado de aplicar, por ejemplo, [SMOTE](https://www.statology.org/smote-in-r/)
@@ -1364,13 +1364,34 @@ Ahora, podemos usar los coeficientes del modelo para intuir cuál es la importan
 ```{r}
 # Generamos un dataframe con los datos que necesitamos para el grafico
 values <- as.list(modelo_lda$scaling)
+values <- sapply(values, abs) # Queremos los coeficientes en valor absoluto
 names <- colnames(df_train[, 1:8])
 plot_data <- data.frame(unlist(values), unlist(names))
 colnames(plot_data) <- c("Coeficientes", "Variables")
 
+# Ordenamos de mayor a menor en funcion del valor de los coeficientes
+plot_data <- plot_data[order(plot_data$Coeficientes, decreasing = FALSE), ]
+
 # Usamos esto para hacer un barplot
-barplot(plot_data$Coeficientes)
+# `par` y `las=1` para que se muestren los nombres de las variables
+# Ademas, añado margenes para que se muestren correctamente los nombres de las
+# variables
+par(mai=c(1,3,1,1))
+barplot(plot_data$Coeficientes, names = plot_data$Variables, horiz = TRUE, las = 1, xpd = FALSE)
 ```
+
+Con esto, podemos ver que:
+
+1. Es un modelo mucho más justo de lo que pensábamos que iba a ser, por la exploración realizada previamente
+2. La agilidad mental ,formas de hablar y presentar ideas son las tres variables más importantes, con una gran diferencia respecto a la cuarta (la confianza)
+3. Las variable menos relevante es la apariencia, lo que parece indicarnos que es un modelo bastante justo
+4. La siguiente menos relevante es el rendimiento académico
+    - Esto ya lo esperábamos por la exploración previa
+    - A la hora de seleccionar candidatos, esta variable creemos que debería ser más relevante
+5. La condición física creemos que está demasiado valorada, haciendo al modelo menos justo
+    - Está por encima de otras variables como las habilidades de comunicación y rendimiento académico
+6. En general, tenemos un modelo que usa variables de una forma más o menos justa, con sus cosas buenas y malas. Aunque pensábamos que iba a ser un modelo mucho más injusto
+   > Notar que la injusticia del modelo simplemente representa la injusticia de los datos con los que se ha construido. En ningún momento estamos diciendo que sea un modelo inherentemente injusto
 
 ## Clasificador con discriminante cuadrático
 
