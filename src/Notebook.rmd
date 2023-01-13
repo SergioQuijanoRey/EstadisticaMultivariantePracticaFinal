@@ -1404,7 +1404,9 @@ modelo_qda <- qda(formula = form_original, data = df_train)
 modelo_qda
 ```
 
-## Clasificador
+En este caso, como tenemos una fórmula cuadrática, en vez de lineal, la interpretación del valor de los coeficientes no es tan directa como en el caso del discriminante lineal. Así que no realizamos una interpretación similar. Además, en [Clasificador XGBOOST], también hacemos una interpretación de este tipo, así que con ello tendremos suficiente información.
+
+## Clasificador XGBOOST
 
 Como hemos visto en [Tabla resumiendo los resultados obtenidos], este es el mejor modelo. El *dataset* sobre el que mejores resultados se obtiene es al que aplicamos *PCA*. Procedemos a entrenar el modelo sobre todo el conjunto de datos:
 
