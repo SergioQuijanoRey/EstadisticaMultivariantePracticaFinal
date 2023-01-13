@@ -1486,7 +1486,50 @@ Con esto, podemos sacar las siguientes conclusiones:
 
 > **IMPORTANTE**: ya hemos elegido, con *k-fold Cross Validation* es el mejor modelo. Usar los resultados de la validación sobre *test* para escoger cuál es el mejor modelo implicaría que usamos estas métricas en el aprendizaje, cayendo en *data snooping*. Viendo los resultados de los tres modelos solo nos sirve para, o bien confirmar lo que hemos afirmado previamente, o ver que no es correcto y que por tanto algo en nuestra metodología ha fallado
 
-## Validación con matriz de confusión
+## Discriminante lineal
+
+Empezamos viendo el **accuracy** del modelo, tanto en entrenamiento como en *test*. Aunque nos interesa sobre todo el rendimiento en *test*, viendo también el rendimiento en entrenamiento podemos ver ciertos problemas (i.e. *overfitting*). Empezamos con esta función auxiliar, para no repetir el mismo código múltiples veces:
+
+```{r}
+# Calcula el accuracy de un modelo sobre un conjunto de datos
+# `input_vars` data.frame con las variables de entrada
+# `labels` vector con las etiquetas reales
+# `model` modelo del que calculamos el accuracy
+get_accuracy <- function(input_vars, labels, model) {
+    # Realizamos las predicciones usando el modelo y variables de entrada
+    predictions <- predict(model, input_vars)
+
+    # Miramos cuantas predicciones son correctas
+    correct_predictions <- predictions$class == labels
+
+    # Lo usamos para computar el accuracy
+    accuracy <- sum(correct_predictions) / length(correct_predictions)
+
+    return(accuracy)
+}
+```
+
+Calculamos ahora los valores:
+
+```{r}
+# Calculamos las predicciones
+# test_predictions <- predict(modelo_lda, df_test[, 1:8])
+# test_labels <- df_test[, 9]
+#
+# # Miramos la cantidad de predicciones correctas
+# correct_predictions <- test_predictions$class == test_labels$CLASS
+# test_accuracy <- sum(correct_predictions) / length(correct_predictions)
+# test_accuracy
+
+train_accuracy <- get_accuracy(df_train[, 1:8], df_train$CLASS, modelo_lda)
+test_accuracy <- get_accuracy(df_test[, 1:8], df_test$CLASS, modelo_lda)
+message("Train accuracy: ", train_accuracy, "  Test accuracy: ", test_accuracy)
+
+```
+
+## Discriminante cuadrático
+
+## XGBOOST
 
 
 
