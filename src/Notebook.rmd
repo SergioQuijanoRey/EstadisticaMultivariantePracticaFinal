@@ -1446,17 +1446,17 @@ Como sospechábamos, la componente principal relacionada con el rendimiento acad
 ```{r}
 # Convertimos los datos al formato que necesita xgboost
 # Usamos una formula para indicar que no se use la variable objetivo
-xgboost_train <- model.matrix(CLASS~.-1, data = as.data.frame(df_train))
+xgboost_train_complete <- model.matrix(CLASS~.-1, data = as.data.frame(df_train))
 
 # No generamos de nuevo las etiquetas, puesto que son las mismas que en
 # validacion cruzada anterior
 
 # Ahora juntamos las variables de entrada, con las etiquetas formateadas
-xgboost_train <- xgb.DMatrix(xgboost_train, label = zero_one_labels)
+xgboost_train_complete <- xgb.DMatrix(xgboost_train_complete, label = zero_one_labels)
 
 # Entrenamos el modelo
-xgb_model <- xgb.train(
-    data = xgboost_train,
+xgb_model_complete <- xgb.train(
+    data = xgboost_train_complete,
     max_depth = 10,
     eta = 0.3,
     nrounds = 100,
@@ -1466,7 +1466,7 @@ xgb_model <- xgb.train(
 )
 
 # Mostramos la importancia de las variables
-imp_matrix <- xgb.importance(feature_names = colnames(xgboost_train), model = xgb_model)
+imp_matrix <- xgb.importance(feature_names = colnames(xgboost_train_complete), model = xgb_model_complete)
 print(xgb.plot.importance(importance_matrix = imp_matrix))
 ```
 
@@ -1512,24 +1512,68 @@ get_accuracy <- function(input_vars, labels, model) {
 Calculamos ahora los valores:
 
 ```{r}
-# Calculamos las predicciones
-# test_predictions <- predict(modelo_lda, df_test[, 1:8])
-# test_labels <- df_test[, 9]
-#
-# # Miramos la cantidad de predicciones correctas
-# correct_predictions <- test_predictions$class == test_labels$CLASS
-# test_accuracy <- sum(correct_predictions) / length(correct_predictions)
-# test_accuracy
-
+# Calculamos los accuracy
 train_accuracy <- get_accuracy(df_train[, 1:8], df_train$CLASS, modelo_lda)
 test_accuracy <- get_accuracy(df_test[, 1:8], df_test$CLASS, modelo_lda)
-message("Train accuracy: ", train_accuracy, "  Test accuracy: ", test_accuracy)
 
+# Mostramos los valores
+message("Train accuracy: ", train_accuracy, "  Test accuracy: ", test_accuracy)
 ```
 
 ## Discriminante cuadrático
 
+Usamos el código anterior para hacer lo mismo con este modelo:
+
+```{r}
+# Calculamos los accuracy
+train_accuracy <- get_accuracy(df_train[, 1:8], df_train$CLASS, modelo_qda)
+test_accuracy <- get_accuracy(df_test[, 1:8], df_test$CLASS, modelo_qda)
+
+# Mostramos los valores
+message("Train accuracy: ", train_accuracy, "  Test accuracy: ", test_accuracy)
+```
+
 ## XGBOOST
+
+En este caso, tenemos que modificar el código que usamos para el cálculo del *accuracy*:
+
+```{r}
+# Realizamos la conversion de datos, que en test todavia no hemos realizado
+xgboost_test_data <- model.matrix(CLASS~.-1, data = as.data.frame(df_test_pca))
+zero_one_labels_test <- dont_use_factor(df_test_pca)$CLASS - 1
+xgboost_test <- xgb.DMatrix(xgboost_test_data, label = zero_one_labels_test)
+
+# Realizamos las predicciones en test
+test_predictions <- predict(xgb_model, xgboost_test_data)
+test_predictions <- as.numeric(test_predictions > 0.5)
+correct_predictions <- test_predictions == zero_one_labels_test
+test_accuracy <- sum(correct_predictions) / length(correct_predictions)
+
+# Ahora hacemos lo mismo para train
+train_predictions <- predict(xgb_model, xgboost_train)
+train_predictions <- as.numeric(train_predictions > 0.5)
+correct_predictions <- train_predictions == zero_one_labels
+train_accuracy <- sum(correct_predictions) / length(correct_predictions)
+
+# Ya podemos mostrar los resultados
+message("Train accuracy: ", train_accuracy, "  Test accuracy: ", test_accuracy)
+```
+
+## Resumen de los resultados obtenidos
+
+Empezamos viendo los valores de *accuracy*:
+
+| Modelo | Train acc | Test acc |
+| :--- | :--- | :--- |
+| Discriminante lineal | 0.591178965224767 | 0.598319327731092 |
+| Discriminante cuadrático | 0.706106870229008 | 0.697478991596639 |
+| XGBOOST | 0.913910093299406 | 0.890756302521008 |
+
+Con esto, podemos ver que:
+
+1. *k-fold Cross Validation* ha sido efectivo, puesto que *XGBOOST* es efectivamente el modelo que mejor comportamiento ha mostrado
+2. Además, la métrica obtenida en *test* no está demasiado alejada de la estimada usando *k-fold Cross Validation* (menos de un $0.01$ de diferencia)
+3. A pesar de las fallas de supuestos, el discriminante cuadrático ha obtenido unos resultados decentes, con un *accuracy* casi del 70%
 
 
 
