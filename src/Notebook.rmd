@@ -1325,17 +1325,17 @@ accuracy
 
 ## Tabla resumiendo los resultados obtenidos
 
-| Modelo | Dataset | Accuracy |
-| :--- | :--- | :--- |
-| Discriminante Lineal     | Original | 0.5915605 |
-| Discriminante Lineal     | PCA      | 0.5334985 |
-| Discriminante Lineal     | FA       | 0.5284333 |
-| Discriminante Cuadrático | Original | 0.6891568 |
-| Discriminante Cuadrático | PCA      | 0.5615132 |
-| Discriminante Cuadrático | FA       | 0.587775 |
-| XGBOOST | Original | 0.9014924 |
-| **XGBOOST** | **PCA**      | **0.9046639** |
-| XGBOOST | FA       | 0.9036134 |
+| Modelo                   | Dataset  | Accuracy      |
+| :---                     | :---     | :---          |
+| Discriminante Lineal     | Original | 0.5915605     |
+| Discriminante Lineal     | PCA      | 0.5334985     |
+| Discriminante Lineal     | FA       | 0.5284333     |
+| Discriminante Cuadrático | Original | 0.6891568     |
+| Discriminante Cuadrático | PCA      | 0.5615132     |
+| Discriminante Cuadrático | FA       | 0.587775      |
+| XGBOOST                  | Original | 0.9014924     |
+| **XGBOOST**              | **PCA**  | **0.9046639** |
+| XGBOOST                  | FA       | 0.9036134     |
 
 ## Conclusiones
 
@@ -1611,19 +1611,52 @@ conf_matrix_test
 
 ## Resumen de los resultados obtenidos
 
-Empezamos viendo los valores de *accuracy*:
+Empezamos viendo los __valores de *accuracy*__:
 
-| Modelo | Train acc | Test acc |
-| :--- | :--- | :--- |
-| Discriminante lineal | 0.591178965224767 | 0.598319327731092 |
+| Modelo                   | Train acc         | Test acc          |
+| :---                     | :---              | :---              |
+| Discriminante lineal     | 0.591178965224767 | 0.598319327731092 |
 | Discriminante cuadrático | 0.706106870229008 | 0.697478991596639 |
-| XGBOOST | 0.913910093299406 | 0.890756302521008 |
+| XGBOOST                  | 0.913910093299406 | 0.890756302521008 |
 
 Con esto, podemos ver que:
 
 1. *k-fold Cross Validation* ha sido efectivo, puesto que *XGBOOST* es efectivamente el modelo que mejor comportamiento ha mostrado
 2. Además, la métrica obtenida en *test* no está demasiado alejada de la estimada usando *k-fold Cross Validation* (menos de un $0.01$ de diferencia)
 3. A pesar de las fallas de supuestos, el discriminante cuadrático ha obtenido unos resultados decentes, con un *accuracy* casi del 70%
+4. Nuestros modelos no tienen *overfitting*, y por tanto, podemos pensar que van a generalizar bien
+
+Ahora, pasemos a comentar las **matrices de confusión**. Comentaremos solo las matrices sobre conjunto de test, puesto que con los valores de *accuracy* ya hemos visto que nuestros modelos generalizan bien. Aunque podamos usar estas matrices para calcular las métricas recall, precision, specificity, f-score, accuracy y área bajo la curva ROC, con esto y los comentarios que vamos a realizar será suficiente (aunque en ocasiones nos refiramos a alguno de estos valores de forma implícita).
+
+**Discriminante lineal**:
+
+| Predicción / Valor real | Empleable | No empleable |
+| :---                    | :---      | :---         |
+| Empleable               | 85        | 80           |
+| No empleable            | 159       | 271          |
+
+Con esto, podemos ver que:
+
+1. Tenemos muchos falsos negativos, muchos más que falsos positivos. Esto en el ámbito en el que nos encontramos no es del todo crítico, puesto que estamos rechazando más de la cuenta (en otros ambientes esto puede ser peligroso)
+2. Tenemos unos pocos falsos positivos. Estos errores son más relevantes que los falsos negativos, puesto que no queremos que en nuestra empresa entren candidatos no adecuados
+3. No es un modelo demasido fiable, principalmente, porque los valores fuera de la diagonal ($159 + 80 = 239) está muy cercana a los valores de la diagonal (85 + 271 = 356)
+4. El modelo tiende a clasificar como no empleables (165 positivos vs 431 negativos, cuando sabíamos que hay aproximadamente 40% positivos 60% negativos en nuestros datos)
+5. Por tanto, podemos sospechar que el modelo casi siempre clasifica como no empleables. El *accuracy* del modelo está algo por debajo del 60%, que es aproximadamente la proporción de no empleables del *dataset*. Sospechamos que el modelo no está realizando un aprendizaje efectivo, simplemente clasifica como negativos casi siempre
+
+**Discriminante cuadrático**:
+
+| Predicción / Valor real | Empleable | No empleable |
+| :---                    | :---      | :---         |
+| Empleable               | 121       | 57           |
+| No empleable            | 123       | 294          |
+
+**XGBOOST**:
+
+| Predicción / Valor real | No empleable | Empleable |
+| :---                    | :---         | :---      |
+| No empleable            | 211          | 32        |
+| Empleable               | 33           | 319       |
+
 
 # TODO -- comentar los resultados de las matrices de confusión
 # TODO -- ponerlas aqui, solo las de test, y comentar en base a ello
