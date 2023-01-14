@@ -1748,8 +1748,112 @@ Como variables no meritocráticas consideramos:
 Con esto, realizamos la separación del conjunto de datos:
 
 ```{r}
-# TODO -- implementar
+# Variables meritocraticas
+mer_vars <- c(4, 6, 7, 8)
+
+# Variables no meritocraticas
+non_mer_vars <- c(1, 2, 3, 5)
+
+# Añadimos la variable de salida
+mer_vars <- c(mer_vars, 9)
+non_mer_vars <- c(non_mer_vars, 9)
+
+# Realizamos la separacion de los datos
+
+df_train_mer <- df_train[, mer_vars]
+df_train_non_mer <- df_train[, non_mer_vars]
 ```
+
+Veamos los primeros datos de cada uno de estos *dataframes* para asegurarnos de que la separación es correcta:
+
+```{r}
+head(df_train_mer)
+head(df_train_non_mer)
+```
+
+## Ajuste de hiperparámetros para ambos modelos
+
+Vamos a realizar un pequeño ajuste de los hiperparámetros de *XGBOOST* sobre ambos conjuntos de datos. Será una búsqueda de hiperparámetros usando la ténica de *Grid Search*^[Uso este [tutorial](https://www.projectpro.io/recipes/tune-hyper-parameters-grid-search-r) para implementar Grid Search]:
+
+**Datos meritocráticos**:
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+# Especificamos que vamos a usar 5 fold cross validation con grid search
+# Usamos un valor menor de 10 porque la computacion ahora va a ser mas intensiva
+train_control <- trainControl(method = "cv", number = 5, search = "grid")
+
+# Especificamos el grid sobre el que nos vamos a mover
+grid <- expand.grid(
+    # Valores que exploramos
+    max_depth = c(3, 5, 7),
+    nrounds = (1:50) * 10,
+    eta = c(0.1, 0.2, 0.3),
+
+    # Valores que no exploramos
+    # Colocamos los valores por defecto del modelo
+    gamma = 0,
+    subsample = 1,
+    min_child_weight = 1,
+    colsample_bytree = 0.6
+)
+
+# Realizamos la exploracion
+grid_search_results_mer <- train(
+    CLASS~.,
+    data = df_train_mer,
+    method = "xgbTree",
+    trControl = train_control,
+    tuneGrid = grid
+)
+```
+
+**Datos no meritocráticos**:
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+# Especificamos que vamos a usar 5 fold cross validation con grid search
+# Usamos un valor menor de 10 porque la computacion ahora va a ser mas intensiva
+train_control <- trainControl(method = "cv", number = 5, search = "grid")
+
+# Especificamos el grid sobre el que nos vamos a mover
+grid <- expand.grid(
+    # Valores que exploramos
+    max_depth = c(3, 5, 7),
+    nrounds = (1:50) * 10,
+    eta = c(0.1, 0.2, 0.3),
+
+    # Valores que no exploramos
+    # Colocamos los valores por defecto del modelo
+    gamma = 0,
+    subsample = 1,
+    min_child_weight = 1,
+    colsample_bytree = 0.6
+)
+
+# Realizamos la exploracion
+grid_search_results_non_mer <- train(
+    CLASS~.,
+    data = df_train_non_mer,
+    method = "xgbTree",
+    trControl = train_control,
+    tuneGrid = grid
+)
+```
+
+En las dos celdas anteriores no mostramos el proceso, porque se imprimen muchas lineas con el *log* del proceso. Ahora pasamos a mostrar los resultados, empezando por el conjunto meritocrático:
+
+```{r}
+grid_search_results_mer
+```
+
+Y ahora, el conjunto no meritocrático:
+
+```{r}
+grid_search_results_non_mer
+```
+
+## Entrenamiento de los modelos
+
+Ahora que tenemos los dos conjuntos de parámetros pseudo-óptimos (la exploración que hemos hecho no nos asegura que estos parámetros sean óptimos) pasamos a entrenar los dos modelos:
 
 
 
