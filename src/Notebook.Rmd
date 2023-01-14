@@ -20,7 +20,10 @@ Vamos a trabajar con una base de datos sobre la empleabilidad de ciertos estudia
 Tenemos dos objetivos en este trabajo:
 
 1. Construir un modelo que prediga, en base a las métricas recogidas durante la entrevista, si una persona es empleable o no
-2. Estudiar las métricas recogidas, buscando ver cuáles son las más relevantes <!-- TODO -- quizas esto es mentira por lo que voy a hacer mas tarde -->
+2. Estudiar si los datos reflejan que el proceso es meritocrático o si, por el contrario, reflejan algún tipo de injusticia
+    - Esto lo haremos realizando un análisis exploratorio de datos
+    - Y además, en [Experimento Adicional], dividiremos los datos en dos conjuntos: uno con variables meritocráticas y otro con variables no meritocráticas. Veremos cuál de los dos modelos tiene mejor rendimiento
+    - Si el modelo no meritocrático tuviese mejor rendimiento, podríamos pensar que los datos muestran una clara injusticia en el proceso de selección
 
 Notar que todo el código, así como el historial del desarrollo de este, está disponible en [este repositorio de Github](https://github.com/SergioQuijanoRey/EstadisticaMultivariantePracticaFinal)
 
@@ -134,7 +137,7 @@ head(df)
 
 ## Separación en training / test
 
-Para realizar una posterior validación cruzada, tenemos que separar los datos en dos conjuntos, uno de entrenamiento y otro de test. Además, todo el procesamiento de datos que realicemos, deberá ser de la siguiente forma, para evitar caer en *data snooping*: ^[Para un lector que no esté familiarizado con este concepto, se puede consultar [este recuros](https://web.ma.utexas.edu/users/mks/statmistakes/datasnooping.html)]
+Para realizar una posterior validación cruzada, tenemos que separar los datos en dos conjuntos, uno de entrenamiento y otro de test. Además, todo el procesamiento de datos que realicemos, deberá ser de la siguiente forma, para evitar caer en *data snooping*: ^[Para un lector que no esté familiarizado con este concepto, se puede consultar [este recurso](https://web.ma.utexas.edu/users/mks/statmistakes/datasnooping.html)]
 
 - Todo el procesamiento de datos debe aprenderse sobre el conjunto de entrenamiento
 - Este procesamiento aprendido en el conjunto de entrenamiento debe aplicarse ciegamente sobre el conjunto de test
@@ -223,7 +226,7 @@ Veamos algunos datos de entrenamiento, ahora que hemos hecho la modificación:
 head(df_train)
 ```
 
-Y con el resumen del dataframe podemos ver que el cambio ha sido efectivo, a nivel del tipo de datos que estamos manejando:
+Y con el resumen del *dataframe* podemos ver que el cambio ha sido efectivo, a nivel del tipo de datos que estamos manejando:
 
 ```{r}
 summary(df_train)
@@ -531,7 +534,7 @@ Con esta matriz de correlaciones, podemos ver que:
 2. La variable rendimiento académico no está apenas correlada con ninguna otra variable
     - Empezamos a pensar que, con todo lo que hemos visto, esta variable va a ser muy poco útil para predecir la empleabilidad de una persona
     - Es destacable pues, en una situación de plena meritocracia, esta variable pensamos que debería ser de las más importantes
-3. El resto de variables sí que parecen estar correladas entre ellas. Podemos ver que hay un bloque, el de todas las variables de entradad salvo el rendimiento académico, que están muy correladas entre sí. Luego tenemos el rendimiento que, como ya hemos comentado, no se correla con el resto de variables. Por tanto, al reducir la dimensionalidad, **podemos esperar**:
+3. El resto de variables sí que parecen estar correladas entre ellas. Podemos ver que hay un bloque, el de todas las variables de entrada salvo el rendimiento académico, que están muy correladas entre sí. Luego tenemos el rendimiento que, como ya hemos comentado, no se correla con el resto de variables. Por tanto, al reducir la dimensionalidad, **podemos esperar**:
     - Obtener dos bloques, uno con el rendimiento académico solo y otro con el resto de variables de entrada combinadas de alguna forma
     - Un único bloque, descartando el rendimiento académico
 
@@ -757,7 +760,7 @@ Con esto, podemos pensar que:
 ### Elección del número de componentes principales
 
 
-**Primer método**, **Regla de Abdi et al. (2010)**: Se promedia las varianzas explicadas por la componentes principales y se selecciona aquellas cuya proporción de varianza explicada supera la media ^[Esto lo tomo directamente del código visto en las práticas]:
+**Primer método**, **Regla de Abdi et al. (2010)**: Se promedia las varianzas explicadas por la componentes principales y se selecciona aquellas cuya proporción de varianza explicada supera la media ^[Esto lo tomo directamente del código visto en las prácticas]:
 
 ```{r}
 which(df_train_pca_transf$sdev^2 > mean(df_train_pca_transf$sdev^2))
@@ -837,7 +840,7 @@ colnames(df_train_pca) <- c("PC1", "PC2", "CLASS")
 head(df_train_pca)
 ```
 
-Hacemos lo mismo para el conjunto de test. Usamos los parametros aprendidos sobre entrenamiento para evitar hacer *data snooping*:
+Hacemos lo mismo para el conjunto de test. Usamos los parámetros aprendidos sobre entrenamiento para evitar hacer *data snooping*:
 
 
 ```{r}
@@ -1037,7 +1040,7 @@ Esto lo hacemos porque realizaremos clasificación con los tres modelos, usando 
 
 ### Contraste de hipótesis
 
-H0: Las variables siguen una distribución normal multivariante
+$H_0$: Las variables siguen una distribución normal multivariante
 
 Empezamos con el **test de Mardia**:
 
@@ -1122,7 +1125,7 @@ Ocurre exactamente lo mismo, no asumimos la homogeneidad de la varianza.
 
 Tenemos algunos hiperparámetros que escoger. Entre ellos:
 
-1. Consideraremos tres modelos: discriminante lineal, discriminante cuadrático y *XGBOOST*^[Se puede consultar más inforación sobre este modelo en la [documentación oficial](https://xgboost.readthedocs.io/en/stable/index.html)]. Tenemos que elegir, al final, cuál de los tres modelos funciona mejor (aunque entrenaremos y validaremos los tres)
+1. Consideraremos tres modelos: discriminante lineal, discriminante cuadrático y *XGBOOST*^[Se puede consultar más información sobre este modelo en la [documentación oficial](https://xgboost.readthedocs.io/en/stable/index.html)]. Tenemos que elegir, al final, cuál de los tres modelos funciona mejor (aunque entrenaremos y validaremos los tres)
 2. Tenemos también tres conjuntos de datos: el original que hemos limpiado ligeramente, el que se obtiene de aplicar PCA y finalmente, el que se obtiene de aplicar Análisis Factorial. En cada uno de los tres modelos, tenemos que ver qué conjunto de datos funciona mejor
 3. *XGBOOST* tiene algunos hiperparámetros que podemos explorar, aunque en esta práctica no lo haremos
 
@@ -1679,8 +1682,8 @@ Con esto, podemos ver que:
 
 1. Tenemos muchos falsos negativos, muchos más que falsos positivos. Esto en el ámbito en el que nos encontramos no es del todo crítico, puesto que estamos rechazando más de la cuenta (en otros ambientes esto puede ser peligroso)
 2. Tenemos unos pocos falsos positivos. Estos errores son más relevantes que los falsos negativos, puesto que no queremos que en nuestra empresa entren candidatos no adecuados
-3. No es un modelo demasido fiable, principalmente, porque los valores fuera de la diagonal ($159 + 80 = 239) está muy cercana a los valores de la diagonal (85 + 271 = 356)
-4. El modelo tiende a clasificar como no empleables (165 positivos vs 431 negativos, lo que supone una relacion 27%-73%, cuando sabíamos que hay aproximadamente 40% positivos 60% negativos en nuestros datos)
+3. No es un modelo demasiado fiable, principalmente, porque los valores fuera de la diagonal ($159 + 80 = 239) está muy cercana a los valores de la diagonal (85 + 271 = 356)
+4. El modelo tiende a clasificar como no empleables (165 positivos vs 431 negativos, lo que supone una relación 27%-73%, cuando sabíamos que hay aproximadamente 40% positivos 60% negativos en nuestros datos)
 5. Por tanto, podemos sospechar que el modelo casi siempre clasifica como no empleables. El *accuracy* del modelo está algo por debajo del 60%, que es aproximadamente la proporción de no empleables del *dataset*. Sospechamos que el modelo no está realizando un aprendizaje efectivo, simplemente clasifica como negativos casi siempre
 
 **Discriminante cuadrático**:
@@ -1723,7 +1726,7 @@ Por ejemplo, hemos visto la poca relevancia del rendimiento académico en alguno
 
 Para confirmar esto, vamos a realizar un breve experimento. Aunque se podría plantear de forma mucho más profunda, por el alcance de esta práctica final no realizamos dicho estudio en profundidad.
 
-El experimento consistirá en entrenar dos modelos, uno usando variables (que consideramos) meritocráticas, y otro con variables (de nuevo, que consideramos) no meritocráticas. Si el modelo que usa variables no meritocráticas obtiene mejores resultados a la hora de realizar las prediccciones, podremos pensar que estas variables no meritocráticas explican mejor el proceso mental llevado a cabo por los empleadores, y por tanto, el proceso parecerá ser más injusto.
+El experimento consistirá en entrenar dos modelos, uno usando variables (que consideramos) meritocráticas, y otro con variables (de nuevo, que consideramos) no meritocráticas. Si el modelo que usa variables no meritocráticas obtiene mejores resultados a la hora de realizar las predicciones, podremos pensar que estas variables no meritocráticas explican mejor el proceso mental llevado a cabo por los empleadores, y por tanto, el proceso parecerá ser más injusto.
 
 Como hemos visto que el mejor modelo es *XGBOOST*, y como nos da algunas facilidades para interpretar los modelos obtenidos, usaremos este modelo. Además, usaremos el conjunto de datos original para simplificar el desarrollo del experimento. Esto porque, para aplicar PCA, habría que aplicarlo a los dos conjuntos por separado, y ver si se obtienen mejores resultados que sin aplicar PCA, usando *k-fold Cross Validation*.
 
@@ -1773,7 +1776,7 @@ head(df_train_non_mer)
 
 ## Ajuste de hiperparámetros para ambos modelos
 
-Vamos a realizar un pequeño ajuste de los hiperparámetros de *XGBOOST* sobre ambos conjuntos de datos. Será una búsqueda de hiperparámetros usando la ténica de *Grid Search*^[Uso este [tutorial](https://www.projectpro.io/recipes/tune-hyper-parameters-grid-search-r) para implementar Grid Search]:
+Vamos a realizar un pequeño ajuste de los hiperparámetros de *XGBOOST* sobre ambos conjuntos de datos. Será una búsqueda de hiperparámetros usando la técnica de *Grid Search*^[Uso este [tutorial](https://www.projectpro.io/recipes/tune-hyper-parameters-grid-search-r) para implementar Grid Search]:
 
 **Datos meritocráticos**:
 
@@ -1964,7 +1967,7 @@ Resumimos los resultados en la siguiente tabla:
 
 | Conjunto de datos    | Train Acc         | Test Acc              |
 | :---                 | :---              | :---                  |
-| Meritocŕatico        | 0.733248515691264 | 0.694117647058824     |
+| Meritocrático        | 0.733248515691264 | 0.694117647058824     |
 | **No meritocrático** | 0.719677692960136 | **0.715966386554622** |
 
 ## Conclusiones
