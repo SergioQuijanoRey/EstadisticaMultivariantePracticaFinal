@@ -1853,9 +1853,121 @@ grid_search_results_non_mer
 
 ## Entrenamiento de los modelos
 
-Ahora que tenemos los dos conjuntos de parámetros pseudo-óptimos (la exploración que hemos hecho no nos asegura que estos parámetros sean óptimos) pasamos a entrenar los dos modelos:
+Ahora que tenemos los dos conjuntos de parámetros pseudo-óptimos (la exploración que hemos hecho no nos asegura que estos parámetros sean óptimos) pasamos a entrenar los dos modelos. Empezamos con el modelo meritocrático:
 
+```{r}
+# Convertimos los datos al formato que necesita xgboost
+# Usamos una formula para indicar que no se use la variable objetivo
+xgboost_train_mer <- model.matrix(CLASS ~ .-1, data = as.data.frame(df_train_mer))
 
+# Usamos las etiquetas transformadas en el entrenamiento de XGBOOST original
+
+# Ahora juntamos las variables de entrada, con las etiquetas formateadas
+xgboost_train_mer <- xgb.DMatrix(xgboost_train_mer, label = zero_one_labels)
+
+# Entrenamos el modelo usando los parametros optimos
+xgb_model_mer <- xgb.train(
+    data = xgboost_train_mer,
+    max_depth = 3,
+    eta = 0.3,
+    nrounds = 480,
+    nthread = 2,
+    objective = "binary:logistic",
+    eval_metric = "error"
+)
+xgb_model_mer
+```
+
+Hacemos lo mismo para el modelo no meritocrático:
+
+```{r}
+# Convertimos los datos al formato que necesita xgboost
+# Usamos una formula para indicar que no se use la variable objetivo
+xgboost_train_non_mer <- model.matrix(CLASS ~ .-1, data = as.data.frame(df_train_non_mer))
+
+# Usamos las etiquetas transformadas en el entrenamiento de XGBOOST original
+
+# Ahora juntamos las variables de entrada, con las etiquetas formateadas
+xgboost_train_non_mer <- xgb.DMatrix(xgboost_train_non_mer, label = zero_one_labels)
+
+# Entrenamos el modelo usando los parametros optimos
+xgb_model_non_mer <- xgb.train(
+    data = xgboost_train_non_mer,
+    max_depth = 3,
+    eta = 0.3,
+    nrounds = 480,
+    nthread = 2,
+    objective = "binary:logistic",
+    eval_metric = "error"
+)
+xgb_model_non_mer
+```
+
+## Resultados obtenidos
+
+Ahora que tenemos los dos modelos entrenados, veamos su rendimiento sobre el conjunto de *test*. Para ello, primero necesitamos generar dichos conjuntos:
+
+```{r}
+df_test_mer <- df_test[, mer_vars]
+df_test_non_mer <- df_test[, non_mer_vars]
+```
+
+Y ahora evaluamos, empezando en el modelo meritocrático:
+
+```{r}
+# Realizamos la conversion de datos al formato que XGBOOST espera
+xgboost_test_data_mer <- model.matrix(CLASS~.-1, data = as.data.frame(df_test_mer))
+zero_one_labels_test <- dont_use_factor(df_test_mer)$CLASS - 1
+xgboost_test_data_mer <- xgb.DMatrix(xgboost_test_data_mer, label = zero_one_labels_test)
+
+# Realizamos las predicciones en test
+test_predictions <- predict(xgb_model_mer, xgboost_test_data_mer)
+test_predictions <- as.numeric(test_predictions > 0.5)
+correct_predictions <- test_predictions == zero_one_labels_test
+test_accuracy_mer <- sum(correct_predictions) / length(correct_predictions)
+
+# Ahora hacemos lo mismo para train
+train_predictions <- predict(xgb_model_mer, xgboost_train_mer)
+train_predictions <- as.numeric(train_predictions > 0.5)
+correct_predictions <- train_predictions == zero_one_labels
+train_accuracy_mer <- sum(correct_predictions) / length(correct_predictions)
+
+# Ya podemos mostrar los resultados
+message("Train accuracy: ", train_accuracy_mer, "  Test accuracy: ", test_accuracy_mer)
+```
+
+Hacemos lo mismo para el modelo no meritocrático:
+
+```{r}
+# Realizamos la conversion de datos al formato que XGBOOST espera
+xgboost_test_data_non_mer <- model.matrix(CLASS~.-1, data = as.data.frame(df_test_non_mer))
+zero_one_labels_test <- dont_use_factor(df_test_non_mer)$CLASS - 1
+xgboost_test_data_non_mer <- xgb.DMatrix(xgboost_test_data_non_mer, label = zero_one_labels_test)
+
+# Realizamos las predicciones en test
+test_predictions <- predict(xgb_model_non_mer, xgboost_test_data_non_mer)
+test_predictions <- as.numeric(test_predictions > 0.5)
+correct_predictions <- test_predictions == zero_one_labels_test
+test_accuracy_non_mer <- sum(correct_predictions) / length(correct_predictions)
+
+# Ahora hacemos lo mismo para train
+train_predictions <- predict(xgb_model_non_mer, xgboost_train_non_mer)
+train_predictions <- as.numeric(train_predictions > 0.5)
+correct_predictions <- train_predictions == zero_one_labels
+train_accuracy_non_mer <- sum(correct_predictions) / length(correct_predictions)
+
+# Ya podemos mostrar los resultados
+message("Train accuracy: ", train_accuracy_non_mer, "  Test accuracy: ", test_accuracy_non_mer)
+```
+
+Resumimos los resultados en la siguiente tabla:
+
+| Conjunto de datos | Train Acc         | Test Acc              |
+| :---              | :---              | :---                  |
+| **Meritocŕatico** | 0.733248515691264 | 0.694117647058824     |
+| No meritocrático  | 0.719677692960136 | **0.715966386554622** |
+
+## Conclusiones
 
 <!-- Al final, siempre tenemos las notas a pie de página -->
 <!-- Así que ponemos un título para que está sección se vea correctamente -->
