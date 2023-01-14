@@ -1532,8 +1532,8 @@ plot_confusion_matrix <- function(conf_matrix) {
             geom_tile() + geom_text(aes(label=Freq)) +
             scale_fill_gradient(low="white", high="#009194") +
             labs(x = "Reference",y = "Prediction") +
-            scale_x_discrete(labels=c("Class_1","Class_2","Class_3","Class_4")) +
-            scale_y_discrete(labels=c("Class_4","Class_3","Class_2","Class_1"))
+            scale_x_discrete(labels=c("Empleable", "No Empleable")) +
+            scale_y_discrete(labels=c("Empleable", "No Empleable"))
 }
 ```
 
