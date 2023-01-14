@@ -1640,7 +1640,7 @@ Con esto, podemos ver que:
 1. Tenemos muchos falsos negativos, muchos más que falsos positivos. Esto en el ámbito en el que nos encontramos no es del todo crítico, puesto que estamos rechazando más de la cuenta (en otros ambientes esto puede ser peligroso)
 2. Tenemos unos pocos falsos positivos. Estos errores son más relevantes que los falsos negativos, puesto que no queremos que en nuestra empresa entren candidatos no adecuados
 3. No es un modelo demasido fiable, principalmente, porque los valores fuera de la diagonal ($159 + 80 = 239) está muy cercana a los valores de la diagonal (85 + 271 = 356)
-4. El modelo tiende a clasificar como no empleables (165 positivos vs 431 negativos, cuando sabíamos que hay aproximadamente 40% positivos 60% negativos en nuestros datos)
+4. El modelo tiende a clasificar como no empleables (165 positivos vs 431 negativos, lo que supone una relacion 27%-73%, cuando sabíamos que hay aproximadamente 40% positivos 60% negativos en nuestros datos)
 5. Por tanto, podemos sospechar que el modelo casi siempre clasifica como no empleables. El *accuracy* del modelo está algo por debajo del 60%, que es aproximadamente la proporción de no empleables del *dataset*. Sospechamos que el modelo no está realizando un aprendizaje efectivo, simplemente clasifica como negativos casi siempre
 
 **Discriminante cuadrático**:
@@ -1650,6 +1650,13 @@ Con esto, podemos ver que:
 | Empleable               | 121       | 57           |
 | No empleable            | 123       | 294          |
 
+Con esto podemos ver que:
+
+1. Respecto al modelo *LDA* hemos mejorado, teniendo menos valores fuera de la diagonal (no muchos menos, la mejora ha sido incremental)
+2. Seguimos teniendo cierta tendencia a clasificar más como no empleables (243 empleables vs 352 no empleables). Ahora ya sí que estamos en una relación 40-60 (casi perfecta), y por tanto podemos pensar que el modelo sí está realizando un aprendizaje (*algo*) efectivo de los datos
+3. Sin embargo, seguimos teniendo demasiados valores fuera de la diagonal
+4. Como en el modelo anterior, son mucho más acentuados los falsos negativos que los falsos positivos, lo cual hace menos graves los fallos en el contexto en el que nos encontramos
+
 **XGBOOST**:
 
 | Predicción / Valor real | No empleable | Empleable |
@@ -1657,12 +1664,12 @@ Con esto, podemos ver que:
 | No empleable            | 211          | 32        |
 | Empleable               | 33           | 319       |
 
+Con esto podemos ver que:
 
-# TODO -- comentar los resultados de las matrices de confusión
-# TODO -- ponerlas aqui, solo las de test, y comentar en base a ello
-
-
-
+1. Apenas tenemos valores fuera de la diagonal, la mejora respecto a los dos modelos previos es abrupta
+2. Como tenemos muy pocos valores fuera de la diagonal, podemos pensar que el modelo ha realizado un aprendizaje bastante efectivo del problema presentado
+3. Tenemos prácticamente los mismos falsos positivos que falsos negativos
+4. No comentamos las tendencias del modelo hacia una clasificación más hacia la empleabilidad o hacia la no empleabilidad, puesto que apenas tenemos fallos y el modelo realiza un trabajo efectivo
 
 
 <!-- Al final, siempre tenemos las notas a pie de página -->
