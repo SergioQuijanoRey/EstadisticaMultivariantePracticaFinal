@@ -531,7 +531,9 @@ Con esta matriz de correlaciones, podemos ver que:
 2. La variable rendimiento académico no está apenas correlada con ninguna otra variable
     - Empezamos a pensar que, con todo lo que hemos visto, esta variable va a ser muy poco útil para predecir la empleabilidad de una persona
     - Es destacable pues, en una situación de plena meritocracia, esta variable pensamos que debería ser de las más importantes
-3. El resto de variables sí que parecen estar correladas entre ellas. No somos capaces de ver grupos claros que podamos usar para una posterior reducción de dimensionalidad. Así que deberemos usar alguno de los métodos vistos en clase para elegir esta reducción
+3. El resto de variables sí que parecen estar correladas entre ellas. Podemos ver que hay un bloque, el de todas las variables de entradad salvo el rendimiento académico, que están muy correladas entre sí. Luego tenemos el rendimiento que, como ya hemos comentado, no se correla con el resto de variables. Por tanto, al reducir la dimensionalidad, **podemos esperar**:
+    - Obtener dos bloques, uno con el rendimiento académico solo y otro con el resto de variables de entrada combinadas de alguna forma
+    - Un único bloque, descartando el rendimiento académico
 
 Ahora, usando un gráfico de barras, podemos visualizar cuáles son los pares de variables que más correladas están entre sí:
 
@@ -1142,14 +1144,10 @@ Por ser un conjunto de datos pequeños, y al estar usando modelos rápidos de en
 number_of_folds <- 10
 ```
 
-Además, siempre usaremos las siguientes formulas:
+Además, siempre usaremos la siguiente fórmula, para los datos originales:
 
 ```{r}
 form_original <- as.formula("CLASS ~ APARIENCIA + `FORMAS HABLAR` + `CONDICION FISICA` + `AGILIDAD MENTAL` + CONFIANZA + `HAB. PRESENTAR_IDEAS` + `HABILIDADES COMUNICACION` + `RENDIMIENTO ACADEMICO`")
-
-form_pca <- as.formula("CLASS ~ PC1 + PC2")
-
-# form_fa <- as.formula("CLASS ~ MR1 + MR2")
 ```
 
 Y siempre el mismo tipo de control:
@@ -1515,6 +1513,30 @@ get_eval_metrics <- function(input_vars, labels, model) {
 }
 ```
 
+Más tarde visualizaremos la matriz de confusión con la siguiente función auxiliar:
+
+```{r}
+# Dada una matriz de confusion, la muestra graficamente
+# Copio y modifico la funcion del siguiente recurso:
+#   https://stackoverflow.com/a/64539733
+plot_confusion_matrix <- function(conf_matrix) {
+
+    # Hago esta adaptacion para que funcion el siguiente codigo
+    cm <- conf_matrix
+
+    # Este codigo esta copiado directamente de stackoverflow
+    plt <- as.data.frame(cm$table)
+    plt$Prediction <- factor(plt$Prediction, levels=rev(levels(plt$Prediction)))
+
+    ggplot(plt, aes(Prediction,Reference, fill= Freq)) +
+            geom_tile() + geom_text(aes(label=Freq)) +
+            scale_fill_gradient(low="white", high="#009194") +
+            labs(x = "Reference",y = "Prediction") +
+            scale_x_discrete(labels=c("Class_1","Class_2","Class_3","Class_4")) +
+            scale_y_discrete(labels=c("Class_4","Class_3","Class_2","Class_1"))
+}
+```
+
 Calculamos ahora las métricas:
 
 ```{r}
@@ -1538,6 +1560,12 @@ train_metrics$conf_matrix
 
 message("Test")
 test_metrics$conf_matrix
+```
+
+Visualicemos la matriz de confusión en *test*:
+
+```{r}
+plot_confusion_matrix(test_metrics$conf_matrix)
 ```
 
 ## Discriminante cuadrático
@@ -1565,6 +1593,12 @@ train_metrics$conf_matrix
 
 message("Test")
 test_metrics$conf_matrix
+```
+
+Visualicemos la matriz de confusión en *test*:
+
+```{r}
+plot_confusion_matrix(test_metrics$conf_matrix)
 ```
 
 ## XGBOOST
@@ -1607,6 +1641,12 @@ conf_matrix_train
 
 message("Test")
 conf_matrix_test
+```
+
+Visualicemos la matriz de confusión en *test*:
+
+```{r}
+plot_confusion_matrix(test_metrics$conf_matrix)
 ```
 
 ## Resumen de los resultados obtenidos
@@ -1670,6 +1710,47 @@ Con esto podemos ver que:
 2. Como tenemos muy pocos valores fuera de la diagonal, podemos pensar que el modelo ha realizado un aprendizaje bastante efectivo del problema presentado
 3. Tenemos prácticamente los mismos falsos positivos que falsos negativos
 4. No comentamos las tendencias del modelo hacia una clasificación más hacia la empleabilidad o hacia la no empleabilidad, puesto que apenas tenemos fallos y el modelo realiza un trabajo efectivo
+
+----------------------------------------------------------------------------------------------------
+
+# Experimento Adicional
+
+## Motivación
+
+A lo largo de este cuaderno hemos podido ver que, quizás, el proceso de selección no es del todo justo. Esto es, que el hecho de aceptar o no a una persona puede depender de factores poco meritocráticos (i.e. la condición físicas).
+
+Por ejemplo, hemos visto la poca relevancia del rendimiento académico en algunos modelos, cuando debería ser una de las variables más relevantes.
+
+Para confirmar esto, vamos a realizar un breve experimento. Aunque se podría plantear de forma mucho más profunda, por el alcance de esta práctica final no realizamos dicho estudio en profundidad.
+
+El experimento consistirá en entrenar dos modelos, uno usando variables (que consideramos) meritocráticas, y otro con variables (de nuevo, que consideramos) no meritocráticas. Si el modelo que usa variables no meritocráticas obtiene mejores resultados a la hora de realizar las prediccciones, podremos pensar que estas variables no meritocráticas explican mejor el proceso mental llevado a cabo por los empleadores, y por tanto, el proceso parecerá ser más injusto.
+
+Como hemos visto que el mejor modelo es *XGBOOST*, y como nos da algunas facilidades para interpretar los modelos obtenidos, usaremos este modelo. Además, usaremos el conjunto de datos original para simplificar el desarrollo del experimento. Esto porque, para aplicar PCA, habría que aplicarlo a los dos conjuntos por separado, y ver si se obtienen mejores resultados que sin aplicar PCA, usando *k-fold Cross Validation*.
+
+## Elección de los subconjuntos de datos
+
+Ahora, pasamos a dividir nuestro conjunto de datos en dos: uno con variables meritocráticas y otro con variables no meritocráticas. Esta elección es arbitraria y totalmente subjetiva, lo normal es que el lector no esté totalmente de acuerdo con esta elección. El código de este cuaderno está pensado para que cambiando la siguiente división, todo funcione sin prácticamente cambios:
+
+Como variables meritocráticas consideramos:
+
+1. Rendimiento académico
+2. Agilidad mental
+3. Habilidad para presentar ideas
+4. Habilidades de comunicación
+
+Como variables no meritocráticas consideramos:
+
+1. Condición físicas
+2. Apariencia
+3. Formas de hablar
+4. Confianza
+
+Con esto, realizamos la separación del conjunto de datos:
+
+```{r}
+# TODO -- implementar
+```
+
 
 
 <!-- Al final, siempre tenemos las notas a pie de página -->
