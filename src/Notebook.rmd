@@ -1962,12 +1962,25 @@ message("Train accuracy: ", train_accuracy_non_mer, "  Test accuracy: ", test_ac
 
 Resumimos los resultados en la siguiente tabla:
 
-| Conjunto de datos | Train Acc         | Test Acc              |
-| :---              | :---              | :---                  |
-| **Meritocŕatico** | 0.733248515691264 | 0.694117647058824     |
-| No meritocrático  | 0.719677692960136 | **0.715966386554622** |
+| Conjunto de datos    | Train Acc         | Test Acc              |
+| :---                 | :---              | :---                  |
+| Meritocŕatico        | 0.733248515691264 | 0.694117647058824     |
+| **No meritocrático** | 0.719677692960136 | **0.715966386554622** |
 
 ## Conclusiones
+
+1. Aunque tenga un peor **accuracy** en entrenamiento, en *test* (que es lo que realmente nos importa), el modelo no meritocrático supera la modelo meritocrático
+2. La diferencia es pequeña, algo por encima de $0.02$
+3. Sin embargo, esto nos indica, **de forma contundente**, que los datos con los que estamos trabajando son en cierta medida injustos, pues no se corresponden con un proceso meritocrático
+4. La diferencia con el modelo completo es aproximadamente del $0.2$. Esto es realmente poco, teniendo en cuenta que:
+    1. Trabajamos con la mitad de las variables
+    2. No tenemos ciertas variables que deberían ser muy relevantes
+5. Obtenemos un gran rendimiento sin conocer:
+    - El rendimiento académico
+    - Las habilidades de comunicación y de presentar ideas
+    - LA agilidad mental
+6. Con solo conocer las formas de hablar, condición física, apariencia y confianza obtenemos mejores resultados que conociendo las otras variables, que deberían ser contundentemente más relevantes
+7. Por tanto, podemos concluir que los datos reflejan la falta de meritocracia a la hora de encontrar un nuevo puesto de trabajo
 
 <!-- Al final, siempre tenemos las notas a pie de página -->
 <!-- Así que ponemos un título para que está sección se vea correctamente -->
