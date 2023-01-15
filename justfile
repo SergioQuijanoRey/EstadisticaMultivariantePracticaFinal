@@ -1,7 +1,7 @@
 # Este archivo define las distintas tareas
 # Por ejemplo, compilar el archivo RMarkdown en distintos formatos, limpiar archivos temporales, ...
 
-NOTEBOOK := "./src/Notebook.rmd"
+NOTEBOOK := "./src/Notebook.Rmd"
 BROWSER := "chromium"
 PDF_VIEWER := "evince"
 RM := "trash"
