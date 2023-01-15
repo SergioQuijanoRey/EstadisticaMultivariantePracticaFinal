@@ -973,7 +973,7 @@ El test nos dice que **con dos factores es suficiente**. Ahora, antes de plantea
 factanal(df_train[, 1:8], factors = 1, rotation = "none")
 ```
 
-Con un solo factor también es suficiente. Aunque sospechamos que, para realizar con cierto rendimiento la tarea de clasificación, una sola variable latente puede ser muy poco. Así que calculamos el modelo y lo mostramos, pero en otra variable. Así conservamos los dos modelos, con una y dos variables latentes:
+Con **un solo factor también es suficiente*. Aunque sospechamos que, para realizar con cierto rendimiento la tarea de clasificación, una sola variable latente puede ser muy poco. Así que calculamos el modelo y lo mostramos, pero en otra variable. Así conservamos los dos modelos, con una y dos variables latentes:
 
 ```{r}
 df_train_fa_varimax_one <- fa(
@@ -1127,7 +1127,7 @@ Tenemos algunos hiperparámetros que escoger. Entre ellos:
 
 1. Consideraremos tres modelos: discriminante lineal, discriminante cuadrático y *XGBOOST*^[Se puede consultar más información sobre este modelo en la [documentación oficial](https://xgboost.readthedocs.io/en/stable/index.html)]. Tenemos que elegir, al final, cuál de los tres modelos funciona mejor (aunque entrenaremos y validaremos los tres)
 2. Tenemos también tres conjuntos de datos: el original que hemos limpiado ligeramente, el que se obtiene de aplicar PCA y finalmente, el que se obtiene de aplicar Análisis Factorial. En cada uno de los tres modelos, tenemos que ver qué conjunto de datos funciona mejor
-3. *XGBOOST* tiene algunos hiperparámetros que podemos explorar, aunque en esta práctica no lo haremos
+3. *XGBOOST* tiene algunos hiperparámetros que podemos explorar. En esta parte realizaremos una exploración manual (realmente, con uno de los primeros hiperparámetros explorados fue suficiente). En el [Experimento Adicional] realizamos una exploración automática de los hiperparámetros de *XGBOOST*
 
 Para encontrar estos hiperparámetros, podríamos realizar el entrenamiento y ver qué resultados son los mejores en test. Esto supone **data snooping**, porque estamos involucrando el conjunto de test en el aprendizaje (aunque el último paso se haga por parte de una persona, sigue siendo parte del entrenamiento de un modelo).
 
@@ -1490,11 +1490,12 @@ Con esto, podemos sacar las siguientes conclusiones:
 
 ## Discriminante lineal
 
-Empezamos viendo el **accuracy** del modelo, tanto en entrenamiento como en *test*. Aunque nos interesa sobre todo el rendimiento en *test*, viendo también el rendimiento en entrenamiento podemos ver ciertos problemas (i.e. *overfitting*). Empezamos con esta función auxiliar, para no repetir el mismo código múltiples veces:
+Empezamos viendo el **accuracy** del modelo, tanto en entrenamiento como en *test*. Aunque nos interesa sobre todo el rendimiento en *test*, viendo también el rendimiento en entrenamiento podemos ver ciertos problemas (i.e. *overfitting*). Además, usaremos esa función también para calcular la matriz de confusión. Empezamos con esta función auxiliar, para no repetir el mismo código múltiples veces:
 
 ```{r}
-# Calcula el accuracy de un modelo sobre un conjunto de datos
-# Tambien calcula la matriz de confusion
+# Calcula algunas metricas relevantes de un modelo sobre un conjunto de datos:
+#   - Accuracy
+#   - Matriz de confusion
 # `input_vars` data.frame con las variables de entrada
 # `labels` vector con las etiquetas reales
 # `model` modelo del que calculamos el accuracy y la matriz de confusion
