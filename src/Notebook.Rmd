@@ -1779,9 +1779,11 @@ head(df_train_non_mer)
 
 Vamos a realizar un pequeño ajuste de los hiperparámetros de *XGBOOST* sobre ambos conjuntos de datos. Será una búsqueda de hiperparámetros usando la técnica de *Grid Search*^[Uso este [tutorial](https://www.projectpro.io/recipes/tune-hyper-parameters-grid-search-r) para implementar Grid Search]:
 
+Mostramos el código pero no mostramos los resultados del proceso, porque se muestran demasiados mensajes durante el proceso, que hacen ilegible el cuaderno. Más adelante mostramos los resultados finales, que contienen suficiente información sobre el proceso realizado.
+
 **Datos meritocráticos**:
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}
+```{r, message = FALSE, warning = FALSE, results='hide'}
 # Especificamos que vamos a usar 5 fold cross validation con grid search
 # Usamos un valor menor de 10 porque la computacion ahora va a ser mas intensiva
 train_control <- trainControl(method = "cv", number = 5, search = "grid")
@@ -1813,7 +1815,7 @@ grid_search_results_mer <- train(
 
 **Datos no meritocráticos**:
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}
+```{r, message = FALSE, warning = FALSE, results='hide'}
 # Especificamos que vamos a usar 5 fold cross validation con grid search
 # Usamos un valor menor de 10 porque la computacion ahora va a ser mas intensiva
 train_control <- trainControl(method = "cv", number = 5, search = "grid")
@@ -1843,7 +1845,7 @@ grid_search_results_non_mer <- train(
 )
 ```
 
-En las dos celdas anteriores no mostramos el proceso, porque se imprimen muchas lineas con el *log* del proceso. Ahora pasamos a mostrar los resultados, empezando por el conjunto meritocrático:
+Ahora pasamos a mostrar los resultados, empezando por el conjunto meritocrático:
 
 ```{r}
 grid_search_results_mer
