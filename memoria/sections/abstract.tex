@@ -1,0 +1,26 @@
+\section{Abstract}
+
+% No mas de doscientas palabras
+
+En este trabajo, estudiaremos una base de datos consistente en métricas recogidas durante entrevistas de prueba, junto a si los candidatos son o no escogidos para el hipotético puesto de trabajo.
+
+Con \textbf{dos objetivos} en mente:
+
+\begin{itemize}
+    \item Construir un clasificador eficiente para predecir la empleabilidad
+    \item Usar la base de datos para realizar un estudio sobre lo meritocrático del proceso. Dicho experimento consiste en entrenar dos modelos, uno usando las variables que consideramos meritocráticas, y otro usando las variables que consideramos no meritocráticas. Si el modelo que usa variables no meritocráticas funciona mejor, podemos pensar que entonces el proceso de selección se basa más en estos aspectos, que hemos considerado no meritocráticos
+\end{itemize}
+
+Para ello, realizaremos:
+
+\begin{itemize}
+    \item Un estudio univariante de la base de datos, destacando el tratamiento de \textit{outliers}, el estudio de la normalidad univariante, y un análisis descriptivo clásico
+    \item Un estudio multivariante de la base de datos, destacando el estudio de las correlaciones entre variables, tratamiento multivariante de \textit{outliers}, estudio de normalidad multivariante y reducción de la dimensionalidad con \textit{PCA} y \textit{FA}
+    \item Ajuste de los modelos, destacando una pequeña exploración de hiperparámetros, entrenamiento y validación, comparando los resultados
+    \item El experimento adicional, previamente mencionado
+\end{itemize}
+
+Al final, conseguimos obtener un modelo muy robusto a la hora de realizar predicciones, y todo el análisis realizado en el cuaderno, más el experimento adicional, confirman de forma contundente la falta de meritocracia en el proceso de selección.
+
+
+
