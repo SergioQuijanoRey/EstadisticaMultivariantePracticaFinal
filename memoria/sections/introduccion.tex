@@ -1,8 +1,33 @@
-\section{introduccion}
+\section{Introducción}
 
-TODO
+La base de datos usada se compone de métricas recogidas durante entrevistas de trabajo de pruebas a alumnos universitarios en las Filipinas. Además, en dicha base de datos, se recoge si el candidato es elegido o no para el hipotético puesto de trabajo. Dicha base de datos se encuentra en \textit{Kaggle}, en \cite{database:online}. Comentaremos más sobre la base de datos en \customref{seccion:MaterialesMetodos}.
 
+Como ya se ha comentado, los objetivos del trabajo son dos:
 
-% TODO -- Último párrafo diciendo cuáles han sido los objetivos del trabajo
-% TODO -- Le da relevancia a que comentemos el estado del arte
-% TODO -- Importancia a referencias a otros trabajos
+\begin{enumerate}
+    \item Construir un modelo de clasificación robusto para predecir la empleabilidad de los candidatos
+    \item Estudiar la posible falta de meritocracia en el proceso de selección, reflejado en la base de datos. Esto mediante el análisis exploratorio de los datos, el análisis del comportamiento de los modelos obtenidos y finalmante mediante el experimento adicional
+\end{enumerate}
+
+Para ello hemos realizado todas las tareas especificadas en el guión de prácticas, junto al experimento adicional. En este, realizamos las siguientes tareas:
+
+\begin{enumerate}
+    \item Dividimos la base de datos en dos, una con variables meritocráticas y otra con las variables no meritocráticas \footnotemark
+    \item Entrenamos dos modelos, uno en cada base de datos
+    \item Explicamos qué \textbf{implicaciones} tiene que el \textbf{modelo no meritocrático obtenga los mejores resultados}
+\end{enumerate}
+
+\footnotetext{Notar que esta elección es totalmente subjetiva. El lector puede opinar que cierta variable es meritocrática o no. No tenemos un criterio objetivo para realizar esta distinción. Sin embargo, el código está planteado para que se pueda modificar la subdivisión de la base de datos, y que el resto siga ejecutándose}
+
+De todas las tareas, las más relevantes a la hora de estudiar la meritocracia son:
+
+\begin{itemize}
+    \item El análisis descriptivo de las variables (univariante y multivariante), donde vemos la poca relevancia del rendimiento académico
+    \item Reducción de dimensionalidad. Obtenemos dos componentes principales y dos variables latentes. En ambos casos, obtenemos que la segunda componente o variable latente, se compone únicamente del rendimiento académico, con muy poca relevancia
+    \item Análisis de la importancia de las variables a la hora de construir los modelos de discriminante lineal y \textit{XGBOOST}. Con esto, podemos ver cómo ciertas variables no meritocráticas tienen demasiado peso respecto a las que consideramos meritocráticas
+    \item El experimento deja claro que el proceso de selección no es meritocrático al obtener mejores resultados
+\end{itemize}
+
+Sobre el \textbf{estado del arte}, debemos comentar dos aspectos. El primero, referente a los \textbf{modelos de clasificación} que hemos usado. El análisis discriminante lineal y cuadrático da muy buenos resultados cuando los supuestos sobre los que se sustenta se cumplen. En esta base de datos no se cumplen, así que no podemos esperar resultados muy buenos, aunque como veremos, son decentes. El otro modelo que usamos, \textit{XGBOOST}, es considerado uno de los mejores modelos para todo tipo de datos tabulares. El segundo aspecto que debemos comentar es sobre \textbf{los mejores resultados sobre esta base de datos}. En el repositorio de \textit{Kaggle}, a día de 16 de Enero de 2023, tenemos 10 cuadernos de otras personas \footnotemark. Los mejores resultados no pasan del 90\% de \textit{accuracy} en \textit{test}. Nuestros resultados son del 89\% de \textit{accuracy} en \textit{test}, sin haber hecho una búsqueda de hiperparámetros potente. Por tanto, podemos pensar que en ese aspecto hemos alcanzado prácticamente el estado del arte.
+
+\footnotetext{El código de otras personas que comentamos se puede encontrar en \cite{other_notebooks:online}. De nuevo, notar que cuando escribimos esto, solo 10 personas han subido su código}
