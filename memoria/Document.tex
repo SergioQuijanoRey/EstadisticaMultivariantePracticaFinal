@@ -177,7 +177,13 @@ El estudio de la normalidad univariante, apoyado en los gráficos \textit{qqplot
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{graficos_qqplot}
+    \begin{subfigure}{0.45\textwidth}
+    \includegraphics[width=1.0\textwidth]{graficos_qqplot}
+    \end{subfigure}
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=1.0\textwidth]{graficos_qqplot_segunda}
+    \end{subfigure}
+
     \caption{Gráficos \textit{qqplot} de las variables de entrada}
 \end{figure}
 
@@ -215,7 +221,7 @@ Y también, podemos ver esto mismo en dos subconjuntos de datos, el de registros
 
 Los contrastes de hipótesis, que ya hemos comentado, nos indican que \textbf{NO tenemos normalidad multivariante}, como era de esperar al fallar la normalidad univariante.
 
-Otro contraste de hipótesis nos indica que \textbf{NO tenemos homogeneidad de la varianza}. Aunque al fallar la normalidad multivariante, este resultado no es fiable.
+Otro contraste de hipótesis nos indica que \textbf{NO tenemos homogeneidad de la varianza}. Aunque al fallar la normalidad multivariante, este resultado no es fiable. No es del todo relevante que el \textit{test} no sea fiable. Puesto que estamos comprobando los supuestos para los modelos discriminante, y la falta de normalidad ya hace que, independientemente de la homogeneidad de la varianza, no vayan a funcionar de forma óptima.
 
 Por tanto, los dos \textbf{supuestos sobre los que se sustentan el discriminante lineal y cuadrático fallan}.
 
@@ -341,6 +347,14 @@ Por los motivos que comentamos en \customref{section:Discusion}, al final decidi
 
 \subsection{Exploración de hiperparámetros}
 
+\textit{XGBOOST} tiene hiperparámetros que podemos optimizar usando \textit{k-Fold Cross Validation}. Sin embargo, por la potencia del modelo, basta con que usemos unos parámetros que consideramos razonables, y los modificamos ligeramente para obtener el resultado final. Usamos los siguientes hiperparámetros en este modelo:
+
+\begin{itemize}
+    \item \lstinline{max_depth} = 10
+    \item \lstinline{eta} = 0.3
+    \item \lstinline{nrounds} = 100
+\end{itemize}
+
 Los resultados se resumen en la siguiente tabla:
 
 \begin{table}[H]
@@ -371,7 +385,7 @@ Vemos que los mejores resultados se obtienen con \textit{XGBOOST} sobre el conju
 
 Aunque \textbf{ya hemos decidido que el mejor modelo es \textit{XGBOOST}} sobre los datos a los que aplicamos \textit{PCA}, entrenamos y validamos los tres modelos, cada uno con el conjunto de datos sobre el que obtiene mejores resultados. Con esto, \textbf{podemos realizar un estudio sobre el comportamiento de los tres modelos}.
 
-Los coeficientes (en valor absoluto) del discriminante lineal, que discutiremos en \customref{section:discusion}, se visualizan en la siguiente figura:
+Los coeficientes (en valor absoluto) del discriminante lineal, que discutiremos en \customref{section:Discusion}, se visualizan en la siguiente figura:
 
 \begin{figure}[H]
     \centering
