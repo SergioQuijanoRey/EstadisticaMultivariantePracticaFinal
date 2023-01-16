@@ -219,9 +219,60 @@ Mostramos gráficamente la distribución de la variable de salida:
 \end{figure}
 
 
-Hay cierto desbalanceo hacia la no empleabilidad, aproximadamente un $40-60\%$. De normal, este desbalanceo no es demasiado grave. Además, considerando el desbalanceo esperable dado el contexto en el que estamos (un porcentaje mayoritario no debería ser aceptado para un trabajo), consideramos que no necesitamos aplicar alguna técnica para tratar este desbalanceo (i.e. podría aplicarse \textit{SMOTE}).
+Hay cierto desbalanceo hacia la no empleabilidad, aproximadamente un $40-60\%$. En general, este desbalanceo no es demasiado grave. Además, considerando el desbalanceo esperable dado el contexto en el que estamos (un porcentaje mayoritario no debería ser aceptado para un trabajo), consideramos que no necesitamos aplicar alguna técnica para tratar este desbalanceo (i.e. podría aplicarse \textit{SMOTE}).
 
-\subsection{Métodos}
+\subsection{Métodos estadísticos}
+
+Para el \textbf{análisis univariante}, usamos los siguientes métodos:
+
+\begin{itemize}
+    \item Separación en entrenamiento y \textit{test} para una futura validación cruzada
+    \item Recodificación del \textit{string} de la variable de salida, en valores $0, 1$ y con un \textit{factor} de \textit{R}
+    \item Gráficos de cajas
+    \item Análisis univariante de \textit{outliers}, usando rangos intercuartílicos
+    \item Test de normalidad univariante: test de \textit{Shapiro-Wilk}
+\end{itemize}
+
+Para el \textbf{análisis multivariante}, usamos:
+
+
+\begin{itemize}
+    \item Matriz de correlaciones, test de correlación: test de esfericidad de \textit{Bartlett}
+    \item Análisis multivariante de \textit{outliers} usando la distancia de \textit{Mahalanobis}
+    \item Estandarización de las variables
+    \item Componentes Principales
+    \item Análisis Factorial
+    \item Test de normalidad multivariante: test de \textit{Mardia} y test de \textit{Henze-Zirkler}
+    \item Test de la homogeneidad de la varianza: test \textit{Box M}
+\end{itemize}
+
+Para la \textbf{exploración de los hiperparámetros}, necesarios para la futura clasificación, usamos \footnotemark:
+
+\footnotetext{Tenemos tres conjuntos de datos con los que podemos construir un clasificador. También estamos trabajando con tres modelos distintos. Así que realizamos esta exploración de hiperparámetros para escoger entre las nueve combinaciones posibles.}
+
+\begin{itemize}
+    \item Los tres modelos de clasificadores: discriminante lineal, discriminante cuadrático y \textit{XGBOOST}
+    \item \textit{k-Fold Cross Validation} como método estadístico para realizar la búsqueda de hiperparámetros
+\end{itemize}
+
+Para la \textbf{clasificación}, aunque escogemos la mejor combinación de modelo-conjunto de datos, entrenamos sobre los tres modelos, en cada uno usando el mejor conjunto de datos para ese modelo.
+
+Además, estudiamos las importancias de las variables a la hora de construir el modelo (en \textit{LDA} y \textit{XGBOOST}).
+
+Para la \textbf{validación de los modelos}, usamos:
+
+\begin{itemize}
+    \item \textit{Accuracy} sobre entrenamiento y \textit{test}
+    \item Matriz de confusión
+\end{itemize}
+
+Y para finalizar, en el \textbf{experimento adicional}, usamos:
+
+\begin{itemize}
+    \item Separación de la base de datos en función de si tenemos variables meritocráticas o no
+    \item Ajuste de hiperparámetros de \textit{XGBOOST} usando \textit{k-Fold Cross Validation} y \textit{Grid Search}
+    \item validación de los resultados obtenidos con el \textit{accuracy} y matriz de confusión
+\end{itemize}
 
 
 % TODO -- Los métodos no deben ser más de 400 palabras, describiendo los métodos estadísticos que hemos usado
