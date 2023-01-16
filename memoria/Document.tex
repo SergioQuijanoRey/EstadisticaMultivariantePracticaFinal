@@ -240,8 +240,18 @@ Para el \textbf{análisis multivariante}, usamos:
     \item Matriz de correlaciones, test de correlación: test de esfericidad de \textit{Bartlett}
     \item Análisis multivariante de \textit{outliers} usando la distancia de \textit{Mahalanobis}
     \item Estandarización de las variables
-    \item Componentes Principales
-    \item Análisis Factorial
+    \item Componentes Principales. Para elegir el número de componentes principales:
+        \begin{itemize}
+            \item Regla de \textit{Abdi}
+            \item Mínimo de Varianza explicada
+            \item Método del codo
+            \item Análisis paralelo
+        \end{itemize}
+    \item Análisis Factorial. Para elegir el número de variables latentes:
+        \begin{itemize}
+            \item Método del codo
+            \item Análisis paralelo
+        \end{itemize}
     \item Test de normalidad multivariante: test de \textit{Mardia} y test de \textit{Henze-Zirkler}
     \item Test de la homogeneidad de la varianza: test \textit{Box M}
 \end{itemize}
@@ -251,7 +261,7 @@ Para la \textbf{exploración de los hiperparámetros}, necesarios para la futura
 \footnotetext{Tenemos tres conjuntos de datos con los que podemos construir un clasificador. También estamos trabajando con tres modelos distintos. Así que realizamos esta exploración de hiperparámetros para escoger entre las nueve combinaciones posibles.}
 
 \begin{itemize}
-    \item Los tres modelos de clasificadores: discriminante lineal, discriminante cuadrático y \textit{XGBOOST}
+    \item Los tres modelos clasificadores: discriminante lineal, discriminante cuadrático y \textit{XGBOOST}
     \item \textit{k-Fold Cross Validation} como método estadístico para realizar la búsqueda de hiperparámetros
 \end{itemize}
 
@@ -271,11 +281,9 @@ Y para finalizar, en el \textbf{experimento adicional}, usamos:
 \begin{itemize}
     \item Separación de la base de datos en función de si tenemos variables meritocráticas o no
     \item Ajuste de hiperparámetros de \textit{XGBOOST} usando \textit{k-Fold Cross Validation} y \textit{Grid Search}
-    \item validación de los resultados obtenidos con el \textit{accuracy} y matriz de confusión
+    \item Validación de los resultados obtenidos con el \textit{accuracy} y matriz de confusión
 \end{itemize}
 
-
-% TODO -- Los métodos no deben ser más de 400 palabras, describiendo los métodos estadísticos que hemos usado
 
 \newpage
 
