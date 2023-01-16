@@ -156,6 +156,218 @@
 \newpage
 
 \input{sections/resultados}
+
+\subsection{Análisis Univariante y Multivariante}
+
+En \customref{fig:histogramas_variables} ya hemos visto los histogramas de las variables. Podemos complementar esto con los diagramas de cajas:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{grafico_cajas}
+    \caption{Gráficos de cajas de las variables de entrada}
+\end{figure}
+
+A la hora de borrar \textit{outliers}, de forma univariante, solo la variable \textit{Apariencia} los presenta. Concretamente, presenta 14 registros, lo que supone un 0.587\% del total de los registros, por que lo borramos dichos registros. Aplicando la misma transformación de datos, para no caer en \textit{data snooping}, borramos 2 filas en test, lo que supone un 0.335\%.
+
+A la hora de borrar \textit{outliers}, de forma multivariante, borramos 13 filas del conjunto de entrenamiento, lo que supone un 0.084\%. Para no caer en \textit{data snooping}, no aplicamos este borrado usando la distancia \textit{Mahalanobis} sobre el conjunto de \textit{test}.
+
+En \customref{fig:balanceo_clases} ya hemos visto el balanceo de las clases, con aproximadamente un 60\% de no empleables, 40\% de empleables.
+
+El estudio de la normalidad univariante, apoyado en los gráficos \textit{qqplot} y el contraste de hipótesis nos muestra que \textbf{no tenemos normalidad univariante}, de forma muy contundente. Los gráficos \textit{qqplot} obtenidos son los siguientes:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{graficos_qqplot}
+    \caption{Gráficos \textit{qqplot} de las variables de entrada}
+\end{figure}
+
+La visualización de la matriz de correlaciones, junto con el \textit{test de esfericidad de Bartlett} nos dejan claro que las variables están correlacionadas. La matriz de correlaciones se muestra como la siguiente visualización:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{matriz_correlaciones}
+    \caption{Matriz de correlaciones}
+\end{figure}
+
+Podemos visualizar, en otro formato, los pares de variables que más correladas están entre sí:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{rank_correlaciones}
+    \caption{Pares de variables más correladas entre sí}
+\end{figure}
+
+Y también, podemos ver esto mismo en dos subconjuntos de datos, el de registros asociados a personas empleables y el de no empleables:
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=1.0\textwidth]{rank_empleables}
+        \caption{Candidatos empleables}
+    \end{subfigure}
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=1.0\textwidth]{rank_no_empleables}
+        \caption{Candidatos no empleables}
+    \end{subfigure}
+
+    \caption{Pares de variables más correladas entre sí, según la empleabilidad}
+\end{figure}
+
+Los contrastes de hipótesis, que ya hemos comentado, nos indican que \textbf{NO tenemos normalidad multivariante}, como era de esperar al fallar la normalidad univariante.
+
+Otro contraste de hipótesis nos indica que \textbf{NO tenemos homogeneidad de la varianza}. Aunque al fallar la normalidad multivariante, este resultado no es fiable.
+
+Por tanto, los dos \textbf{supuestos sobre los que se sustentan el discriminante lineal y cuadrático fallan}.
+
+
+\subsection{Reducción de la dimensionalidad}
+
+Esta parte es muy relevante en nuestro estudio. Porque producimos dos nuevos conjuntos de datos, que proporcionarán uno de los mejores resultados a la hora de clasificar, y porque además serán muy relevantes a la hora de estudiar la posible falta de meritocracia.
+
+Además, mantenemos a partir de ahora tres conjuntos de datos:
+
+\begin{enumerate}
+    \item El conjunto de datos original, sobre el que realizamos el tratamiento ya mencionado
+    \item El conjunto de datos original al que aplicamos \textit{PCA}
+    \item El conjunto de datos original al que aplicamos \textit{FA}
+\end{enumerate}
+
+Esto porque a la hora de clasificar, tenemos que elegir todavía cuál es la mejor combinación de modelo-conjunto de datos. Y no todos los modelos necesariamente tengan los mejores resultados sobre el mismo conjunto de datos.
+
+\subsubsection{Componentes Principales}
+
+Veamos la varianza explicada, y la varianza explicada acumulada, por las componentes principales:
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=1.0\textwidth]{pca_var_explicada}
+        \caption{Proporción de la varianza explicada por las componentes principales}
+    \end{subfigure}
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=1.0\textwidth]{pca_var_explicada_acumulada}
+        \caption{Proporción de la varianza explicada acumulada por las componentes principales}
+    \end{subfigure}
+
+    \caption{Información sobre la proporción de la varianza explicada por cada una de las componentes principales}
+\end{figure}
+
+Los resultados de los métodos para elegir el número de componentes principales son:
+
+\begin{itemize}
+    \item Regla de \textit{Abdi}: dos componentes
+    \item Mínimo de Varianza explicada: cuatro componentes, buscando explicar al menos el 80\% de la varianza
+    \item Método del codo: dos componentes
+    \item Análisis paralelo: dos componentes
+\end{itemize}
+
+El método del codo y análisis paralelo se fundamentan en los siguientes gráficos:
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=1.0\textwidth]{pca_codo}
+        \caption{Gráfica del método del codo}
+    \end{subfigure}
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=1.0\textwidth]{pca_paralelo}
+        \caption{Gráfica para el método paralelo}
+    \end{subfigure}
+
+    \caption{Gráficas sobre las que se fundamentan el método del codo y método del análisis paralelo}
+\end{figure}
+
+Por tanto, elegimos usar \textbf{dos componentes principales}
+
+Tras realizar la transformación de los datos, podemos mostrar el siguiente gráfico:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.60\textwidth]{scatter_plot_pca}
+    \caption{Dos primeras componentes principales, coloreadas según la empleabilidad}
+\end{figure}
+
+Además, podemos visualizar la relevancia de las variables de entrada a la hora de generar las dos componentes principales:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{pca_ejes}
+    \caption{Importancia de las variables de entrada a la hora de calcular las dos primeras componentes principales}
+\end{figure}
+
+\subsubsection{Análisis Factorial}
+
+
+Los resultados de los métodos para elegir el número de variables latentes son:
+
+\begin{itemize}
+    \item Método del codo: un factor latente
+    \item Análisis paralelo: dos factores latentes
+\end{itemize}
+
+Esto se fundamenta en los siguientes gráficos:
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=1.0\textwidth]{fa_codo}
+        \caption{Gráfica del método del codo}
+    \end{subfigure}
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=1.0\textwidth]{fa_paralelo}
+        \caption{Gráfica para el método paralelo}
+    \end{subfigure}
+
+    \caption{Gráficas sobre las que se fundamentan el método del codo y método del análisis paralelo}
+\end{figure}
+
+Con un contraste de hipótesis, vemos que es suficiente con un factor latente, y por tanto, también con dos factores latentes. Podemos visualizar cómo se construyen las variables latentes, tanto en el caso de una o dos variables latentes:
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=1.0\textwidth]{var_latentes_uno}
+        \caption{Combinación de las variables de entrada, para un solo factor latente}
+    \end{subfigure}
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=1.0\textwidth]{var_latentes_dos}
+        \caption{Combinación de las variables de entrada, para dos factores latentes}
+    \end{subfigure}
+
+    \caption{Gráfica que muestra cómo se combinan las variables para calcular los factores latentes, para un solo factor latente y para dos factores latentes}
+\end{figure}
+
+Por los motivos que comentamos en \customref{section:Discusion}, al final decidimos quedarnos con dos variables latentes, aunque sea suficiente con una variable latente.
+
+\subsection{Exploración de hiperparámetros}
+
+Los resultados se resumen en la siguiente tabla:
+
+\begin{table}[H]
+\begin{tabular}{|l|l|l|}
+    Modelo                   & Dataset      & Accuracy      \\
+    \hline
+    Discriminante Lineal     & Original     & 0.5915605     \\
+    Discriminante Lineal     & PCA          & 0.5334985     \\
+    Discriminante Lineal     & FA           & 0.5284333     \\
+    Discriminante Cuadrático & Original     & 0.6891568     \\
+    Discriminante Cuadrático & PCA          & 0.5615132     \\
+    Discriminante Cuadrático & FA           & 0.587775      \\
+    XGBOOST                  & Original     & 0.9014924     \\
+    \textbf{XGBOOST}         & \textbf{PCA} & \textbf{0.9046639} \\
+    XGBOOST                  & FA           & 0.9036134     \\
+
+\end{tabular}
+\caption{Resultados de \textit{k-Fold Cross Validation}}
+\end{table}
+
+% TODO -- comentar cual es la mejor combinacion
+
+% TODO -- Resumen de los resultados más destacados
+% TODO -- Orientado al lector final (ie. no incluir gráficos `qqplot`)
+% TODO -- En este apartado se realizan comentarios objetivos, no opiniones ni hipótesis ni qué significan los resultados
+
+
 \newpage
 
 \input{sections/discusion}

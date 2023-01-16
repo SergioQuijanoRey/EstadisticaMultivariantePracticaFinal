@@ -54,6 +54,7 @@ Al estar trabajando con variables discretas, el siguiente gráfico es muy útil 
     \centering
     \includegraphics[width=0.8\textwidth]{histogramas_variables}
     \caption{Histograma de las variables de entrada}
+    \label{fig:histogramas_variables}
 \end{figure}
 
 Mostramos gráficamente la distribución de la variable de salida:
@@ -62,6 +63,7 @@ Mostramos gráficamente la distribución de la variable de salida:
     \centering
     \includegraphics[width=0.6\textwidth]{balanceo_clases}
     \caption{Distribución de la variable de salida, con la que podemos estudiar el balanceo de las clases}
+    \label{fig:balanceo_clases}
 \end{figure}
 
 
@@ -72,7 +74,7 @@ Hay cierto desbalanceo hacia la no empleabilidad, aproximadamente un $40-60\%$. 
 Para el \textbf{análisis univariante}, usamos los siguientes métodos:
 
 \begin{itemize}
-    \item Separación en entrenamiento y \textit{test} para una futura validación cruzada
+    \item Separación en entrenamiento y \textit{test} para una futura validación cruzada (80\% - 20\%)
     \item Recodificación del \textit{string} de la variable de salida, en valores $0, 1$ y con un \textit{factor} de \textit{R}
     \item Gráficos de cajas
     \item Análisis univariante de \textit{outliers}, usando rangos intercuartílicos
@@ -108,7 +110,7 @@ Para la \textbf{exploración de los hiperparámetros}, necesarios para la futura
 
 \begin{itemize}
     \item Los tres modelos clasificadores: discriminante lineal, discriminante cuadrático y \textit{XGBOOST}
-    \item \textit{k-Fold Cross Validation} como método estadístico para realizar la búsqueda de hiperparámetros
+    \item \textit{k-Fold Cross Validation} como método estadístico para realizar la búsqueda de hiperparámetros. Usamos 10 \textit{folds}.
 \end{itemize}
 
 Para la \textbf{clasificación}, aunque escogemos la mejor combinación de modelo-conjunto de datos, entrenamos sobre los tres modelos, en cada uno usando el mejor conjunto de datos para ese modelo.
