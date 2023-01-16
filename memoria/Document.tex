@@ -344,7 +344,9 @@ Por los motivos que comentamos en \customref{section:Discusion}, al final decidi
 Los resultados se resumen en la siguiente tabla:
 
 \begin{table}[H]
+\centering
 \begin{tabular}{|l|l|l|}
+    \hline
     Modelo                   & Dataset      & Accuracy      \\
     \hline
     Discriminante Lineal     & Original     & 0.5915605     \\
@@ -356,17 +358,111 @@ Los resultados se resumen en la siguiente tabla:
     XGBOOST                  & Original     & 0.9014924     \\
     \textbf{XGBOOST}         & \textbf{PCA} & \textbf{0.9046639} \\
     XGBOOST                  & FA           & 0.9036134     \\
+    \hline
 
 \end{tabular}
 \caption{Resultados de \textit{k-Fold Cross Validation}}
+\label{table:cross_validation}
 \end{table}
 
-% TODO -- comentar cual es la mejor combinacion
+Vemos que los mejores resultados se obtienen con \textit{XGBOOST} sobre el conjunto de \textit{PCA}. El discriminante cuadrático y el discriminante lineal obtienen sus mejores resultados sobre el conjunto de datos original.
 
-% TODO -- Resumen de los resultados más destacados
-% TODO -- Orientado al lector final (ie. no incluir gráficos `qqplot`)
-% TODO -- En este apartado se realizan comentarios objetivos, no opiniones ni hipótesis ni qué significan los resultados
+\subsection{Clasificación}
 
+Aunque \textbf{ya hemos decidido que el mejor modelo es \textit{XGBOOST}} sobre los datos a los que aplicamos \textit{PCA}, entrenamos y validamos los tres modelos, cada uno con el conjunto de datos sobre el que obtiene mejores resultados. Con esto, \textbf{podemos realizar un estudio sobre el comportamiento de los tres modelos}.
+
+Los coeficientes (en valor absoluto) del discriminante lineal, que discutiremos en \customref{section:discusion}, se visualizan en la siguiente figura:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{coeficientes_lda}
+    \caption{Visualización de los valores absolutos de los coeficientes del modelo discriminante lineal}
+\end{figure}
+
+El paquete de \textit{XGBOOST} nos otorga una función para mostrar la importancia de cada variable. Mostramos dicha importancia, tanto para el modelo sobre \textit{PCA} (que es el que escogemos por lo visto en \customref{table:cross_validation}) como para el modelo sobre el conjunto de datos original (que solo usamos para visualizar dicha relevancia):
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=1.0\textwidth]{xgb_coeff_pca}
+        \caption{Modelo sobre el conjunto de datos al que aplicamos \textit{PCA}}
+    \end{subfigure}
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=1.0\textwidth]{xgb_coeff_orig}
+        \caption{Modelo sobre el conjunto de datos original}
+    \end{subfigure}
+
+    \caption{Importancia de las variables a la hora de construir el modelo \textit{XGBOOST}}
+\end{figure}
+
+\subsection{Validación}
+
+Empezamos mostrando el \textit{accuracy} de los modelos, tanto en entrenamiento como en \textit{test} \footnotemark:
+
+\footnotetext{De esta forma, podemos diagnosticar ciertos problemas, principalmente, el \textit{overfitting}}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|l}
+\hline
+    Modelo               & \textit{Train acc} & \textit{Test acc}          \\
+\hline
+Discriminante lineal     & 0.591178965224767  & 0.598319327731092 \\
+Discriminante cuadrático & 0.706106870229008  & 0.697478991596639 \\
+\textit{XGBOOST}         & 0.913910093299406  & 0.890756302521008 \\
+\hline
+\end{tabular}
+\caption{\textit{Accuracy} de los tres modelos entrenados}
+\end{table}
+
+\subsection{Experimento adicional}
+
+Como hemos visto que el mejor modelo es \textit{XGBOOST}, y como nos da algunas facilidades para interpretar los modelos obtenidos, usaremos este modelo. Además, usaremos el conjunto de datos original para simplificar el desarrollo del experimento. Esto porque, para aplicar \textit{PCA} o \textit{FA}, habría que aplicarlo a los dos conjuntos por separado, y ver si se obtienen mejores resultados que sin aplicar la transformación, usando \textit{k-fold Cross Validation}.
+
+Realizamos la separación del conjunto de datos original en dos, uno conteniendo las variables que consideramos meritocráticas, y otro con las variables que consideramos no meritocráticas.
+
+Como variables meritocráticas consideramos:
+
+\begin{itemize}
+    \item Rendimiento académico
+    \item Agilidad mental
+    \item Habilidad para presentar ideas
+    \item Habilidades de comunicación
+\end{itemize}
+
+Como variables no meritocráticas consideramos:
+\begin{itemize}
+    \item Condición físicas
+    \item Apariencia
+    \item Formas de hablar
+    \item Confianza
+\end{itemize}
+
+Realizamos un ajuste de hiperparámetros de los dos modelos \textit{XGBOOST}. Esto lo realizamos usando \textit{k-Fold Cross Validation} con \textit{Grid Search}. Los mejores parámetros para cada modelo son:
+
+\begin{itemize}
+    \item Modelo meritocrático: \lstinline{nrounds} = 480, \lstinline{max_depth} = 3, \lstinline{eta} = 0.3
+    \item Modelo no meritocrático: \lstinline{nrounds} = 120, \lstinline{max_depth} = 5, \lstinline{eta} = 0.1
+    \item Para el resto de parámetros, usamos el valor por defecto
+\end{itemize}
+
+Tras entrenar los modelos, los resultados obtenidos son:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|l}
+\hline
+Conjunto de datos    & Train Acc         & Test Acc              \\
+\hline
+Meritocrático        & 0.733248515691264 & 0.694117647058824     \\
+    \textbf{No meritocrático} & 0.719677692960136 & \textbf{0.715966386554622} \\
+\hline
+
+\end{tabular}
+\caption{Resultados del experimento}
+\end{table}
+
+% TODO -- poner aqui las matrices de confusion
 
 \newpage
 
