@@ -1,4 +1,22 @@
 \section{Discusión} \label{section:Discusion}
 
+En el cuaderno que se entrega junto a esta memoria, se discuten prácticamente todos los resultado que obtenemos más o menos en profundidad. Por tanto, aquí solo comentamos los resultados más relevantes. Si el lector tiene curiosidad por profundizar en alguno de los resultados presentados previamente, en dicho cuaderno seguramente encuentre dichos resultados discutidos.
 
-% TODO -- Comentar, interpretar y explicar lo que significan los resultados
+El \textbf{primero de nuestros objetivos era construir un clasificador robusto}. Podemos considerar que hemos logrado este objetivo. En \ref{section:hiperparametros} elegimos \textit{XGBOOST} sobre el conjunto de datos al que aplicamos \textit{PCA} como el modelo más robusto. En \ref{section:validacion} vemos que:
+
+\begin{itemize}
+    \item Efectivamente, \textit{XGBOOST} es el modelo que mejor funciona para esta base de datos
+    \item El modelo generaliza bien, puesto que en el conjunto de \textit{test} se comporta prácticamente igual de bien
+\end{itemize}
+
+Era de esperar que \textit{XGBOOST} fuera el mejor modelo. Los supuestos sobre los que se fundamentan los dos modelos de discrimante fallan, y \textit{XGBOOST} es de los modelos más potentes para datos tabulares.
+
+Nuestro \textbf{segundo objetivo era comprobar si el proceso de selección no es meritocrático}. Esta pregunta es más complicada de responder, y nos tenemos que fundamentar en muchos más recursos.
+
+En primer lugar, vemos en \ref{figure:matriz_correlaciones} que todas las variables de entrada, salvo el \textbf{rendimiento académico}, están bastante correlacionadas entre sí. El rendimiento académico apenas está correlacionada con ninguna otra variable. Esto nos hace sospechar en un primer momento que \textbf{dicha variable no va a ser relevante} a la hora de determinar la empleabilidad. De hecho, es la variable menos correlacionada con la variable de salida. Es más, en \ref{figure:pares_variables_mas_correlacionadas} no aparece. En dicho gráfico, y en \ref{figure:pares_variables_mas_correlacionadas_segun_empleabilidad}, podemos ver que la apariencia y la confianza son de los conceptos más relevantes, considerando que ambos son (según nuestro criterio) no meritocráticos.
+
+Los dos métodos de reducción de dimensionalidad dejan claro que el rendimiento es muy poco relevante. En ambos casos, el primer elemento (componente principal o variable latente) se compone de una combinación de todas las variables menos el rendimiento. El segundo elemento deja al rendimiento en solitario, teniendo mucha menos importancia dicho segundo elemento. Esto se fundamenta en \ref{figure:pca_ejes} y \ref{figure:fa_combinacion_variables}
+
+Con \ref{figure:coeficientes_lda} obtenemos un modelo más justo de lo que esperábamos: la agilidad mental, formas de hablar y habilidad para presentar ideas son las tres variables más importantes, con una gran diferencia respecto a la cuarta (la confianza). Tenemos dos variables meritocráticas (agilidad mental y habilidad para presentar ideas) como las más relevantes. Aunque hay que comentar que este modelo no obtiene resultados satisfactorios. En \ref{figure:importancias_xgb} las dos variables más importantes son la agilidad mental y la apariencia. Nos sorprende que \textbf{la segunda variable más importante a la hora de determinar la empleabilidad}, según este modelo, sea la \textbf{apariencia}, que quizás pueda considerarse la \textbf{variable menos meritocrática de todas}, solo por debajo de la condición física. En tercer lugar tenemos el rendimiento académico. Nos sorprende porque ya hemos visto la poca relevancia que parece tener. Sin embargo, seguimos pensando que tiene poca relevancia. Al trabajar con árboles de decisión, puede ocurrir que usemos esta variable como desempate cuando la agilidad mental y apariencia no sea suficientes para determinar la empleabilidad.
+
+El experimento deja claro que el proceso no es meritocrático, por lo que vemos en \ref{table:resultados_experimento}. Aunque la diferencia en \textit{test} sea pequeña, estamos superando el rendimiento usando \textbf{únicamente variables no meritocráticas}. Con solo conocer las formas de hablar, condición física, apariencia y confianza obtenemos mejores resultados que conociendo el rendimiento académico, las habilidades de comunicación y de presentar ideas y la agilidad mental, que deberían ser mucho más útiles.
