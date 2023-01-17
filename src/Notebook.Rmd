@@ -71,6 +71,9 @@ library(biotools)
 
 # Para usar el modelo xgboost
 library(xgboost)
+
+# Para hacer buen plot de la matriz de confusion
+library(scales)
 ```
 
 Estos paquetes se pueden instalar con la orden `install.packages("<nombre_paquete>")`. Sin embargo, hemos definido todos los paquetes necesarios, de forma declarativa, en el archivo `shell.nix` que se puede encontrar en [este archivo](https://github.com/SergioQuijanoRey/EstadisticaMultivariantePracticaFinal/blob/main/shell.nix). Para usar este entorno de paquetes se puede consultar la [documentación oficial de Nix](https://nixos.org/)
@@ -1527,23 +1530,25 @@ Más tarde visualizaremos la matriz de confusión con la siguiente función auxi
 
 ```{r}
 # Dada una matriz de confusion, la muestra graficamente
-# Copio y modifico la funcion del siguiente recurso:
-#   https://stackoverflow.com/a/64539733
+# Se basa en otra funcion que copio completamente
 plot_confusion_matrix <- function(conf_matrix) {
+    ggplotConfusionMatrix(conf_matrix)
+}
 
-    # Hago esta adaptacion para que funcion el siguiente codigo
-    cm <- conf_matrix
-
-    # Este codigo esta copiado directamente de stackoverflow
-    plt <- as.data.frame(cm$table)
-    plt$Prediction <- factor(plt$Prediction, levels=rev(levels(plt$Prediction)))
-
-    ggplot(plt, aes(Prediction,Reference, fill= Freq)) +
-            geom_tile() + geom_text(aes(label=Freq)) +
-            scale_fill_gradient(low="white", high="#009194") +
-            labs(x = "Reference",y = "Prediction") +
-            scale_x_discrete(labels=c("Empleable", "No Empleable")) +
-            scale_y_discrete(labels=c("Empleable", "No Empleable"))
+# Funcion que copio completamente de:
+# https://www.dataenergy.biz/post/2022-03-09-plot-confusion-matrix-in-r/
+ggplotConfusionMatrix <- function(m){
+    mytitle <- paste("Accuracy", percent_format()(m$overall[1]),
+                     "Kappa", percent_format()(m$overall[2]))
+    p <-
+        ggplot(data = as.data.frame(m$table) ,
+               aes(x = Reference, y = Prediction)) +
+                                geom_tile(aes(fill = log(Freq)), colour = "white") +
+                                scale_fill_gradient(low = "white", high = "steelblue") +
+                                geom_text(aes(x = Reference, y = Prediction, label = Freq)) +
+                                theme(legend.position = "none") +
+                                ggtitle(mytitle)
+                            return(p)
 }
 ```
 
