@@ -1,7 +1,7 @@
 # Este archivo define las distintas tareas
 # Por ejemplo, compilar el archivo RMarkdown en distintos formatos, limpiar archivos temporales, ...
 
-NOTEBOOK := "./src/Notebook.Rmd"
+NOTEBOOK := "./Notebook.Rmd"
 BROWSER := "chromium"
 PDF_VIEWER := "evince"
 RM := "trash"
@@ -27,7 +27,7 @@ view_pdf: (compile "pdf_document")
 # Elimina todos los archivos generados en la compilacion
 # Deja solo los archivos con el codigo fuente
 clean:
-    - {{RM}} ./src/*.pdf
-    - {{RM}} ./src/*.html
-    - {{RM}} ./src/*.log
-    - {{RM}} ./src/*.tex
+    - {{RM}} ./*.pdf
+    - {{RM}} ./*.html
+    - {{RM}} ./*.log
+    - {{RM}} ./*.tex
