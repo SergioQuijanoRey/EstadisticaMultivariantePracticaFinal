@@ -279,6 +279,27 @@ Discriminante cuadrático & 0.706106870229008  & 0.697478991596639 \\
 \caption{\textit{Accuracy} de los tres modelos entrenados}
 \end{table}
 
+Mostramos ahora las matrices de confusión, de los tres modelos, de forma visual, sobre el conjunto de \textit{test}:
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=1.0\textwidth]{confmatrix_lda}
+        \caption{\textit{LDA}}
+    \end{subfigure}
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=1.0\textwidth]{confmatrix_qda}
+        \caption{\textit{QDA}}
+    \end{subfigure}
+
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=1.0\textwidth]{confmatrix_xgb}
+        \caption{\textit{XGBOOST}}
+    \end{subfigure}
+
+    \caption{Matrices de confusión, sobre el conjunto de \textit{test}, de los tres modelos. Notar que los ejes de \textit{XGBOOST} están cambiados, pero la representación sigue siendo correcta fijándonos en la leyenda}
+\end{figure}
+
 \subsection{Experimento adicional}
 
 Como hemos visto que el mejor modelo es \textit{XGBOOST}, y como nos da algunas facilidades para interpretar los modelos obtenidos, usaremos este modelo. Además, usaremos el conjunto de datos original para simplificar el desarrollo del experimento. Esto porque, para aplicar \textit{PCA} o \textit{FA}, habría que aplicarlo a los dos conjuntos por separado, y ver si se obtienen mejores resultados que sin aplicar la transformación, usando \textit{k-fold Cross Validation}.
