@@ -1,5 +1,12 @@
 # Práctica Final Estadística Multivariante - Estudio de la empleabilidad de estudiantes
 
+## Breve descripción del problema
+
+La base de datos usada se compone de métricas recogidas durante entrevistas de trabajo de pruebas a alumnos universitarios en las Filipinas. Además, en dicha base de datos, se recoge si el candidato es elegido o no para el hipotético puesto de trabajo. Dicha base de datos se encuentra en [Kaggle](https://www.kaggle.com/datasets/anashamoutni/students-employability-dataset). Los objetivos del trabajo son dos:
+
+1. Construir un modelo de clasificación robusto para predecir la empleabilidad de los candidatos
+2. Estudiar la posible falta de meritocracia en el proceso de selección, reflejado en la base de datos. Esto mediante el análisis exploratorio de los datos, el análisis del comportamiento de los modelos obtenidos y finalmante mediante el experimento adicional
+
 ## Estructura del proyecto
 
 - En `./src` tenemos el código en `R` para ejecutar el análisis de datos
