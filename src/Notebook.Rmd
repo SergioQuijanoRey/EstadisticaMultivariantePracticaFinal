@@ -1661,7 +1661,7 @@ conf_matrix_test
 Visualicemos la matriz de confusión en *test*:
 
 ```{r}
-plot_confusion_matrix(test_metrics$conf_matrix)
+plot_confusion_matrix(conf_matrix_test)
 ```
 
 ## Resumen de los resultados obtenidos
