@@ -1,3 +1,22 @@
-\section{conclusion}
+\section{Conclusión}
 
-TODO
+Consideramos que \textbf{hemos logrado alcanzar los dos objetivos planteados}: construir un clasificador robusto para la base de datos y estudiar la posible falta de meritocracia en el proceso de selección de los candidatos.
+
+Del trabajo realizado, \textbf{destacamos}:
+
+\begin{itemize}
+    \item El análisis exploratorio de la base de datos, que ya nos da bastante información sobre la falta de meritocracia que reflejan los datos
+    \item El uso de varios clasificadores, que escogemos usando \textit{k-fold Cross Validation}, y que una vez entrenados son interpretables, proporcionando información muy valiosa para nuestro estudio de la meritocracia. Además, este proceso genera un clasificador muy robusto
+    \item El experimento adicional que deja más clara la falta de meritocracia
+\end{itemize}
+
+Como \textbf{puntos a mejorar en un futuro trabajo}, consideramos principalmente:
+
+\begin{itemize}
+    \item En el experimento adicional, escogemos las variables de forma manual y completamente subjetiva. En un futuro trabajo, se puede usar una metodología \textit{wrapper feature selector} para seleccionar automáticamente las variables, como se describe en \cite{r_wrap:online} o en \cite{general_wrap:online}
+    \item Los dos modelos de discriminante no han funcionado bien por la falta de los supuestos. La base de datos, con variables discretas con rangos muy pequeños, puede no darnos tanto juego como nos gustaría. Así que un buen futuro trabajo sería repetir la metodología de este trabajo sobre un mejor conjunto de datos
+\end{itemize}
+
+
+
+
